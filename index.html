@@ -680,7 +680,8 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
     }
 
     const REVIEW_INTERVALS = [1, 2, 4, 7, 14, 30];
-    const state = { lessonId: 1, lang: 'zh', mode: 'course', rate: { examples: 1, dialogue: 1 }, dialogueStart: 0, run: 0, user: null, progressLoaded: false, completedLessons: [], dailyStudy: defaultDailyStudy(), dailyQuizKey: null, authMode: 'register', adminUsers: [], adminFilter: '', adminLoading: false, adminError: '' };
+    const DAILY_LESSON_LIMIT = 3;
+    const state = { lessonId: 1, lang: 'zh', mode: 'course', rate: { examples: 1, dialogue: 1 }, dialogueStart: 0, run: 0, user: null, progressLoaded: false, completedLessons: [], dailyStudy: defaultDailyStudy(), dailyLessonId: null, dailyQuizKey: null, authMode: 'register', adminUsers: [], adminFilter: '', adminLoading: false, adminError: '' };
     const isEnglish = () => state.lang === 'en';
     const meaningFor = word => isEnglish() ? word.en : word.zh;
     const translationFor = item => isEnglish() ? item.en : item.zh;
@@ -742,16 +743,27 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
     function currentLesson() { return lessons[state.lessonId - 1]; }
     const localized = (zh, en) => isEnglish() ? en : zh;
 
-    function defaultDailyStudy() { return { startDate: '', completedDays: [], reviewRecords: {} }; }
+    function defaultDailyStudy() { return { startDate: '', completedDays: [], lessonDates: {}, reviewRecords: {} }; }
     function sanitizeDailyStudy(raw) {
       const source = raw && typeof raw === 'object' ? raw : {};
       const startDate = /^\d{4}-\d{2}-\d{2}$/.test(source.startDate || '') ? source.startDate : '';
       const completedDays = [...new Set(Array.isArray(source.completedDays) ? source.completedDays.filter(day => Number.isInteger(day) && day >= 1 && day <= lessons.length) : [])].sort((a, b) => a - b);
+      const lessonDates = {};
+      const hasLessonDates = source.lessonDates && typeof source.lessonDates === 'object';
+      if (hasLessonDates) {
+        Object.entries(source.lessonDates).forEach(([lessonId, date]) => {
+          const id = Number(lessonId);
+          if (Number.isInteger(id) && id >= 1 && id <= lessons.length && /^\d{4}-\d{2}-\d{2}$/.test(date || '')) lessonDates[id] = date;
+        });
+      }
+      if (startDate && !hasLessonDates) completedDays.forEach(day => {
+        if (!lessonDates[day]) lessonDates[day] = dateForStudyDay(startDate, day);
+      });
       const reviewRecords = {};
       if (source.reviewRecords && typeof source.reviewRecords === 'object') {
         Object.entries(source.reviewRecords).forEach(([key, value]) => { if (typeof value === 'string' && value.length <= 32) reviewRecords[key] = value; });
       }
-      return { startDate, completedDays, reviewRecords };
+      return { startDate, completedDays, lessonDates, reviewRecords };
     }
     function loadLocalDailyStudy() {
       try { return sanitizeDailyStudy(JSON.parse(localStorage.getItem('spanish-daily-study') || '{}')); }
@@ -766,28 +778,50 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       const [year, month, day] = dateString.split('-').map(Number);
       return Date.UTC(year, month - 1, day) / 86400000;
     }
+    function dateForStudyDay(startDate, studyDay) {
+      return new Date((calendarDayNumber(startDate) + studyDay - 1) * 86400000).toISOString().slice(0, 10);
+    }
     function dailyDayNumber() {
       if (!state.dailyStudy.startDate) return 1;
       return Math.max(1, calendarDayNumber(localDateString()) - calendarDayNumber(state.dailyStudy.startDate) + 1);
     }
-    function todayLessonId() { return Math.min(dailyDayNumber(), lessons.length); }
+    function dailyLessonIdsForDate(date = localDateString()) {
+      return Object.entries(state.dailyStudy.lessonDates || {}).filter(([, learnedDate]) => learnedDate === date).map(([lessonId]) => Number(lessonId)).filter(Number.isInteger).sort((a, b) => a - b);
+    }
+    function nextDailyLessonId() {
+      return lessons.find(lesson => !state.dailyStudy.lessonDates?.[lesson.id])?.id || null;
+    }
+    function activeDailyLessonId() {
+      const todayLessons = dailyLessonIdsForDate();
+      const nextLessonId = nextDailyLessonId();
+      if (state.dailyLessonId && (todayLessons.includes(state.dailyLessonId) || state.dailyLessonId === nextLessonId)) return state.dailyLessonId;
+      return nextLessonId || todayLessons.at(-1) || lessons.length;
+    }
+    function dailyCanStartAnotherLesson() { return dailyLessonIdsForDate().length < DAILY_LESSON_LIMIT && Boolean(nextDailyLessonId()); }
     function ensureDailyPlan() {
       if (state.dailyStudy.startDate) return false;
       state.dailyStudy.startDate = localDateString();
       saveLocalDailyStudy();
       return true;
     }
+    function syncDailyCompletedDays() {
+      if (!state.dailyStudy.startDate) return;
+      state.dailyStudy.completedDays = [...new Set(Object.values(state.dailyStudy.lessonDates || {})
+        .filter(date => /^\d{4}-\d{2}-\d{2}$/.test(date))
+        .map(date => Math.max(1, calendarDayNumber(date) - calendarDayNumber(state.dailyStudy.startDate) + 1)))].sort((a, b) => a - b);
+    }
     function reviewKey(lessonId, wordIndex, interval) { return `${lessonId}-${wordIndex}-${interval}`; }
     function scheduledReviewItems() {
       if (!state.dailyStudy.startDate) return [];
-      const today = dailyDayNumber(); const items = [];
+      const today = localDateString(); const items = [];
       lessons.forEach(lesson => {
-        if (lesson.id >= today) return;
-        const elapsed = today - lesson.id;
+        const learnedDate = state.dailyStudy.lessonDates?.[lesson.id];
+        if (!learnedDate || learnedDate >= today) return;
+        const elapsed = calendarDayNumber(today) - calendarDayNumber(learnedDate);
         lesson.words.forEach((word, wordIndex) => REVIEW_INTERVALS.forEach(interval => {
           if (elapsed < interval) return;
           const key = reviewKey(lesson.id, wordIndex, interval);
-          items.push({ key, lessonId: lesson.id, wordIndex, word, interval, completed: Boolean(state.dailyStudy.reviewRecords[key]) });
+          items.push({ key, lessonId: lesson.id, wordIndex, word, interval, learnedDate, completed: Boolean(state.dailyStudy.reviewRecords[key]) });
         }));
       });
       return items;
@@ -839,22 +873,28 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       const completed = state.completedLessons.length;
       const dailyMode = state.mode === 'daily';
       const studyDay = dailyDayNumber();
-      const finished = dailyMode ? state.dailyStudy.completedDays.includes(studyDay) : state.completedLessons.includes(state.lessonId);
-      $('#course-progress-heading').textContent = localized(dailyMode ? '学习进度与今日打卡' : '学习进度', dailyMode ? 'Learning progress and today\'s check-in' : 'Learning progress');
+      const todayLessonCount = dailyLessonIdsForDate().length;
+      const finished = dailyMode ? Boolean(state.dailyStudy.lessonDates?.[state.lessonId]) : state.completedLessons.includes(state.lessonId);
+      const canComplete = !dailyMode || finished || dailyCanStartAnotherLesson();
+      $('#course-progress-heading').textContent = localized(dailyMode ? '学习进度与每日课程' : '学习进度', dailyMode ? 'Learning progress and daily lessons' : 'Learning progress');
       $('#course-progress').max = lessons.length;
       $('#course-progress').value = completed;
       $('#course-progress-text').textContent = signedIn
         ? (dailyMode
-          ? localized(`总课程完成 ${completed} / ${lessons.length}；第 ${studyDay} 天的学习和复习会自动同步。`, `${completed} / ${lessons.length} lessons completed; day ${studyDay} learning and reviews sync automatically.`)
+          ? localized(`总课程完成 ${completed} / ${lessons.length}；今天已完成 ${todayLessonCount} / ${DAILY_LESSON_LIMIT} 课，每课都会按自己的学习日期进入复习。`, `${completed} / ${lessons.length} lessons completed; ${todayLessonCount} / ${DAILY_LESSON_LIMIT} lessons are complete today, and each follows its own review schedule.`)
           : localized(`已完成 ${completed} / ${lessons.length} 课；当前位置：第 ${state.lessonId} 课。`, `${completed} / ${lessons.length} lessons completed; you are at lesson ${state.lessonId}.`))
         : (dailyMode
-          ? localized('每日计划暂存在此浏览器；登录后可同步到不同设备。', 'This daily plan is stored in this browser until you sign in to sync it across devices.')
+          ? localized('每日计划暂存在此浏览器；每课的学习日期和复习记录会在登录后同步到不同设备。', 'This daily plan is stored in this browser until you sign in; each lesson date and review record will then sync across devices.')
           : localized('登录或注册后，可在不同设备继续学习。', 'Sign in or register to continue on any device.'));
-      $('#complete-lesson').textContent = !signedIn
-        ? localized(dailyMode ? '完成今日学习（登录后同步）' : '登录后记录本课', dailyMode ? 'Finish today\'s learning (sign in to sync)' : 'Sign in to record this lesson')
-        : finished ? localized(dailyMode ? '取消今日完成标记' : '取消完成标记', dailyMode ? 'Remove today\'s completion mark' : 'Remove completion mark')
-          : localized(dailyMode ? '完成今日学习' : '完成本课', dailyMode ? 'Finish today\'s learning' : 'Mark this lesson complete');
-      $('#complete-lesson').className = signedIn && !finished ? 'primary' : 'secondary';
+      $('#complete-lesson').textContent = dailyMode
+        ? (finished
+          ? localized('取消本课完成标记', 'Remove this lesson completion')
+          : !canComplete
+            ? localized('今日已完成 3 课', 'Three lessons completed today')
+            : localized(`完成本课（今日 ${todayLessonCount + 1} / ${DAILY_LESSON_LIMIT}）`, `Complete this lesson (today ${todayLessonCount + 1} / ${DAILY_LESSON_LIMIT})`))
+        : (!signedIn ? localized('登录后记录本课', 'Sign in to record this lesson') : finished ? localized('取消完成标记', 'Remove completion mark') : localized('完成本课', 'Mark this lesson complete'));
+      $('#complete-lesson').disabled = !canComplete;
+      $('#complete-lesson').className = (!finished && canComplete && (dailyMode || signedIn)) ? 'primary' : 'secondary';
     }
     function renderDailyMode() {
       const dailyMode = state.mode === 'daily';
@@ -867,27 +907,35 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       $('#mode-daily').classList.toggle('active', dailyMode);
       if (!dailyMode) return;
       const day = dailyDayNumber();
-      const lessonId = todayLessonId();
+      const lessonId = state.lessonId;
       const lesson = lessons[lessonId - 1];
+      const todayLessons = dailyLessonIdsForDate();
+      const nextLessonId = nextDailyLessonId();
+      const lessonFinished = Boolean(state.dailyStudy.lessonDates?.[lessonId]);
+      const canStudyMore = dailyCanStartAnotherLesson();
       const scheduled = scheduledReviewItems();
       const due = dueReviewItems();
       const complete = scheduled.length - due.length;
-      const lessonFinished = state.dailyStudy.completedDays.includes(day);
       $('#daily-heading').textContent = localized('每日学习计划', 'Daily learning plan');
-      $('#daily-description').textContent = localized('每天先复习到期旧词并抽默，再学习一课（10 个词）。', 'Review and dictate due older words first, then learn one new 10-word lesson.');
+      $('#daily-description').textContent = localized('每天先复习到期旧词并抽默；完成第 1 课后可自行选择再学 1–2 课，最多 3 课。每一课都按实际完成日期进入复习。', 'Review and dictate due older words first. After lesson 1, you may choose one or two more lessons, up to three a day. Every lesson follows its own review date.');
       $('#daily-day-label').textContent = localized('学习日', 'Study day');
-      $('#daily-lesson-label').textContent = localized('今日新课', 'Today\'s new lesson');
+      $('#daily-lesson-label').textContent = localized(`今日第 ${Math.min(todayLessons.length + (lessonFinished ? 0 : 1), DAILY_LESSON_LIMIT)} / ${DAILY_LESSON_LIMIT} 课`, `Today\'s lesson ${Math.min(todayLessons.length + (lessonFinished ? 0 : 1), DAILY_LESSON_LIMIT)} / ${DAILY_LESSON_LIMIT}`);
       $('#daily-review-label').textContent = localized('待复习', 'Reviews due');
       $('#daily-day').textContent = localized(`第 ${day} 天`, `Day ${day}`);
-      $('#daily-lesson').textContent = localized(`第 ${lessonId} 课 · ${lesson.title}`, `Lesson ${lessonId} · ${lesson.titleEn}`);
+      $('#daily-lesson').textContent = localized(`第 ${lessonId} 课 · ${lesson.title}${lessonFinished ? '（已完成）' : '（待学习）'}`, `Lesson ${lessonId} · ${lesson.titleEn}${lessonFinished ? ' (completed)' : ' (to study)'}`);
       $('#daily-review-count').textContent = scheduled.length ? localized(`${due.length} 待做 / ${scheduled.length}`, `${due.length} due / ${scheduled.length}`) : localized('明日开始', 'Starts tomorrow');
-      $('#daily-sidebar-summary').textContent = localized(`每日模式\n第 ${day} 天：第 ${lessonId} 课\n待复习：${due.length} 项`, `Daily mode\nDay ${day}: Lesson ${lessonId}\nReviews due: ${due.length}`);
+      $('#daily-sidebar-summary').textContent = localized(`每日模式\n第 ${day} 天：今日 ${todayLessons.length} / ${DAILY_LESSON_LIMIT} 课\n待复习：${due.length} 项`, `Daily mode\nDay ${day}: ${todayLessons.length} / ${DAILY_LESSON_LIMIT} lessons today\nReviews due: ${due.length}`);
       $('#daily-login-note').textContent = state.user
-        ? localized(`计划从 ${state.dailyStudy.startDate} 开始；今日课程${lessonFinished ? '已完成' : '尚未完成'}。`, `Your plan began on ${state.dailyStudy.startDate}; today's lesson is ${lessonFinished ? 'complete' : 'not yet marked complete'}.`)
-        : localized('登录后可将每日计划、复习记录和完成情况同步到账号。', 'Sign in to sync your daily plan, review records and completion status to your account.');
-      $('#daily-go-lesson').textContent = due.length
-        ? localized(`完成旧词复习后，学习第 ${lessonId} 课`, `After review, study lesson ${lessonId}`)
-        : localized('学习今日课程', 'Study today\'s lesson');
+        ? localized(`计划从 ${state.dailyStudy.startDate} 开始；今日已完成 ${todayLessons.length} / ${DAILY_LESSON_LIMIT} 课。`, `Your plan began on ${state.dailyStudy.startDate}; ${todayLessons.length} / ${DAILY_LESSON_LIMIT} lessons are complete today.`)
+        : localized('登录后可将每日计划、每课学习日期、复习记录和完成情况同步到账号。', 'Sign in to sync your daily plan, per-lesson learning dates, review records and completion status.');
+      $('#daily-go-lesson').textContent = lessonFinished
+        ? (canStudyMore
+          ? localized(`再学第 ${todayLessons.length + 1} 课（今日 ${todayLessons.length} / ${DAILY_LESSON_LIMIT}）`, `Study lesson ${todayLessons.length + 1} (today ${todayLessons.length} / ${DAILY_LESSON_LIMIT})`)
+          : localized('今日已完成 3 课', 'Three lessons completed today'))
+        : (due.length
+          ? localized(`完成旧词复习后，开始第 ${todayLessons.length + 1} 课`, `After review, start lesson ${todayLessons.length + 1}`)
+          : localized(`开始第 ${todayLessons.length + 1} 课`, `Start lesson ${todayLessons.length + 1}`));
+      $('#daily-go-lesson').disabled = lessonFinished && !canStudyMore;
       $('#daily-review-heading').textContent = localized('记忆曲线复习与抽默', 'Spaced-repetition review and dictation');
       const intervals = REVIEW_INTERVALS.join('、');
       $('#daily-review-plan').textContent = due.length
@@ -1057,7 +1105,7 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       stopAll(); state.dialogueStart = 0;
       if (state.mode === 'daily') {
         const startedDailyPlan = ensureDailyPlan();
-        state.lessonId = todayLessonId();
+        state.lessonId = activeDailyLessonId();
         localStorage.setItem('spanish-course-lesson', state.lessonId);
         if (startedDailyPlan && state.user && state.progressLoaded) void saveProgress().catch(() => {});
       }
@@ -1087,7 +1135,8 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       localStorage.setItem('spanish-study-mode', mode);
       if (mode === 'daily') {
         const started = ensureDailyPlan();
-        state.lessonId = todayLessonId();
+        state.dailyLessonId = nextDailyLessonId() || dailyLessonIdsForDate().at(-1) || lessons.length;
+        state.lessonId = activeDailyLessonId();
         history.replaceState(null, '', `#leccion-${state.lessonId}`);
         if (started && state.user && state.progressLoaded) void saveProgress().catch(() => {});
       }
@@ -1147,7 +1196,15 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
     ['next', 'next-bottom'].forEach(id => $(`#${id}`).addEventListener('click', () => selectLesson(state.lessonId + 1)));
     $('#mode-course').addEventListener('click', () => switchStudyMode('course'));
     $('#mode-daily').addEventListener('click', () => switchStudyMode('daily'));
-    $('#daily-go-lesson').addEventListener('click', () => $('#course-progress-heading').scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    $('#daily-go-lesson').addEventListener('click', () => {
+      if (state.mode !== 'daily') return;
+      if (state.dailyStudy.lessonDates?.[state.lessonId] && dailyCanStartAnotherLesson()) {
+        state.dailyLessonId = nextDailyLessonId();
+        state.lessonId = activeDailyLessonId();
+        render();
+      }
+      $('#term-heading').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
     $('#daily-check').addEventListener('click', () => { void checkDailyAnswer(); });
     $('#daily-show-answer').addEventListener('click', () => {
       const quiz = currentDailyQuiz(); if (!quiz) return;
@@ -1182,20 +1239,19 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
     $('#complete-lesson').addEventListener('click', async () => {
       if (!state.user && state.mode !== 'daily') return openAuthModal('register');
       const lessonId = state.lessonId;
-      const wasFinished = state.mode === 'daily'
-        ? state.dailyStudy.completedDays.includes(dailyDayNumber())
-        : state.completedLessons.includes(lessonId);
+      const dailyMode = state.mode === 'daily';
+      const wasFinished = dailyMode ? Boolean(state.dailyStudy.lessonDates?.[lessonId]) : state.completedLessons.includes(lessonId);
+      if (dailyMode && !wasFinished && !dailyCanStartAnotherLesson()) return;
       state.completedLessons = wasFinished
         ? state.completedLessons.filter(id => id !== lessonId)
         : [...state.completedLessons, lessonId];
-      if (state.mode === 'daily') {
-        const day = dailyDayNumber();
-        state.dailyStudy.completedDays = wasFinished
-          ? state.dailyStudy.completedDays.filter(item => item !== day)
-          : [...state.dailyStudy.completedDays, day];
+      if (dailyMode) {
+        if (wasFinished) delete state.dailyStudy.lessonDates[lessonId];
+        else state.dailyStudy.lessonDates[lessonId] = localDateString();
+        syncDailyCompletedDays();
         saveLocalDailyStudy();
       }
-      renderProgress();
+      if (dailyMode) render(); else renderProgress();
       try { await saveProgress(); }
       catch (error) { $('#course-progress-text').textContent = localized('保存进度失败，请稍后再试。', 'Saving progress failed. Please try again later.'); }
     });

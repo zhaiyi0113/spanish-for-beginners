@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>西班牙语 50 课｜从零基础到看懂内容</title>
+  <title>西班牙语 150 课｜从零基础到看懂内容</title>
   <style>
     :root { color: #1f2937; background: #f7f9fc; font-family: system-ui, "Microsoft YaHei", sans-serif; }
     * { box-sizing: border-box; }
     body { margin: 0; }
-    button, a, select { font: inherit; }
+    button, a { font: inherit; }
     button { border: 0; border-radius: 9px; padding: 8px 12px; cursor: pointer; }
     .primary { background: #1557c0; color: #fff; }
     .secondary { background: #e1e9f7; color: #173b6c; }
@@ -17,10 +17,12 @@
     .sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; padding: 24px 16px; background: #12315f; color: #fff; }
     .sidebar h1 { margin: 0 0 10px; font-size: 23px; }
     .sidebar p { margin: 0 0 18px; color: #d8e6ff; font-size: 14px; line-height: 1.6; }
-    .language-picker { position: fixed; top: 18px; right: 22px; z-index: 20; display: flex; align-items: center; gap: 7px; padding: 7px 10px 7px 12px; border-radius: 9px; background: #fff; color: #12315f; font-weight: 750; box-shadow: 0 4px 14px rgba(18, 49, 95, .2); }
-    .language-picker label { font-size: 14px; }
-    .language-picker select { min-width: 72px; border: 0; outline: 0; background: transparent; color: #12315f; cursor: pointer; font-weight: 750; }
-    .account-toggle { position: fixed; top: 18px; right: 184px; z-index: 20; margin: 0; background: #1557c0; color: #fff; font-weight: 750; box-shadow: 0 4px 14px rgba(18, 49, 95, .2); }
+    .language-picker { position: fixed; top: 18px; right: 22px; z-index: 20; }
+    .language-toggle { margin: 0; background: #fff; color: #12315f; font-weight: 750; box-shadow: 0 4px 14px rgba(18, 49, 95, .2); }
+    .language-menu { position: absolute; top: calc(100% + 8px); right: 0; display: grid; min-width: 132px; padding: 6px; border: 1px solid #d6e0ed; border-radius: 10px; background: #fff; box-shadow: 0 8px 22px rgba(18, 49, 95, .18); }
+    .language-option { background: transparent; color: #173b6c; text-align: left; }
+    .language-option:hover, .language-option.active { background: #e8f0fc; color: #1557c0; }
+    .account-toggle { position: fixed; top: 18px; right: 154px; z-index: 20; margin: 0; background: #1557c0; color: #fff; font-weight: 750; box-shadow: 0 4px 14px rgba(18, 49, 95, .2); }
     .account-panel { position: fixed; top: 64px; right: 22px; z-index: 21; width: min(300px, calc(100vw - 32px)); padding: 16px; border: 1px solid #d7e1f0; border-radius: 14px; background: #fff; color: #1f2937; box-shadow: 0 10px 30px rgba(19, 49, 95, .2); }
     .account-panel p { margin: 0 0 12px; color: #526174; line-height: 1.5; }
     .account-actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -113,7 +115,7 @@
       .lesson-link { min-height: 48px; padding: 6px; }
       .lesson-name { display: none; }
       .language-picker { top: 12px; right: 12px; }
-      .account-toggle { top: 12px; right: 174px; }
+      .account-toggle { top: 12px; right: 126px; }
       .account-panel { top: 58px; right: 12px; }
       main { padding: 28px 16px 46px; }
       .word-grid { grid-template-columns: 1fr; }
@@ -124,9 +126,9 @@
 <body>
   <div class="shell">
     <aside class="sidebar">
-      <h1 id="site-name">西班牙语 50 课</h1>
-      <p id="site-intro">每天 10 个重点词。前 30 课建立日常交流能力，后 20 课练电视剧、电影、播客与新闻理解。</p>
-      <div class="language-picker"><label for="language-select">Language</label><select id="language-select" aria-label="Language"><option value="zh">中文</option><option value="en">English</option></select></div>
+      <h1 id="site-name">西班牙语 150 课</h1>
+      <p id="site-intro">每天 10 个重点词。从日常交流逐步提升到叙述、影视、播客与新闻理解。</p>
+      <div class="language-picker"><button id="language-toggle" class="language-toggle" type="button" aria-haspopup="true" aria-expanded="false">Language ▾</button><div id="language-menu" class="language-menu" hidden><button class="language-option" data-lang="zh" type="button">中文</button><button class="language-option" data-lang="en" type="button">English</button></div></div>
       <button id="account-toggle" class="account-toggle" type="button">登录 / 注册</button>
       <div id="account-panel" class="account-panel" hidden>
         <p id="account-summary"></p>
@@ -170,7 +172,7 @@
       <section class="panel course-progress">
         <h3 id="course-progress-heading">学习进度</h3>
         <p id="course-progress-text" class="note">登录或注册后，可在不同设备继续学习。</p>
-        <progress id="course-progress" max="50" value="0"></progress>
+        <progress id="course-progress" max="150" value="0"></progress>
         <div class="controls"><button id="complete-lesson" class="secondary" type="button">登录后记录本课</button></div>
       </section>
       <section id="admin-panel" class="panel admin-panel" hidden>
@@ -389,14 +391,150 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       'Sports News', 'Opinions and Reviews', 'Culture and Travel Shows', 'Retelling a Clip', 'Real-Content Review'
     ];
 
-    const lessons = rows.split('\n').map((row, index) => {
+    const baseLessons = rows.split('\n').map((row, index) => {
       const [title, goal, words] = row.split('::');
       const englishWords = englishRows[index].split(';');
       return { id: index + 1, title, titleEn: englishTitles[index], goal, words: words.split(';').map((item, wordIndex) => {
         const [word, zh] = item.split('=');
-        return { word, zh, en: englishWords[wordIndex], pos: inferPos(word), note: inferNote(word), forms: inferForms(word) };
+        return { word, zh, en: englishWords[wordIndex] || word, pos: inferPos(word), note: inferNote(word), forms: inferForms(word) };
       }) };
     });
+
+    const expansionPacks = [
+      'pedir cita|预约|to make an appointment;el formulario|表格|form;el documento|文件|document;la oficina|办事处|office;la firma|签名|signature;el banco|银行|bank;retirar dinero|取钱|to withdraw money;la cuenta bancaria|银行账户|bank account;el alquiler|租金|rent;el contrato|合同|contract;el propietario|房东|owner;la visita|看房|viewing;el barrio|社区|neighbourhood;el buzón|信箱|mailbox;la llave|钥匙|key',
+      'limpiar|打扫|to clean;ordenar|整理|to organise;lavar|清洗|to wash;cocinar|做饭|to cook;cortar|切|to cut;mezclar|混合|to mix;hervir|煮沸|to boil;invitar|邀请|to invite;celebrar|庆祝|to celebrate;el regalo|礼物|gift;el cumpleaños|生日|birthday;decidir|决定|to decide;compartir|分享|to share;ayudar|帮助|to help;discutir|讨论|to discuss',
+      'de niño / de niña|小时候|as a child;recordar|记得|to remember;solía|过去常常|used to;antes|以前|before;mientras|当……时|while;de repente|突然|suddenly;aquel día|那一天|that day;conocí|我认识了|I met;viajé|我旅行了|I travelled;regresé|我回来了|I returned;aprendí|我学到了|I learned;cambié|我改变了|I changed;ocurrió|发生了|it happened;contar|讲述|to tell;la experiencia|经历|experience',
+      'conducir|开车|to drive;aparcar|停车|to park;la gasolina|汽油|petrol;la carretera|公路|road;la bicicleta|自行车|bicycle;el casco|头盔|helmet;el tráfico|交通|traffic;el retraso|延误|delay;perder el tren|错过火车|to miss the train;la recepción|前台|reception;quejarse|抱怨|to complain;la habitación|房间|room;el ruido|噪音|noise;la solución|解决办法|solution;recomendar|推荐|to recommend',
+      'el dentista|牙医|dentist;cepillarse|刷牙|to brush oneself;el ejercicio|锻炼|exercise;caminar|步行|to walk;descansar|休息|to rest;el dolor|疼痛|pain;el síntoma|症状|symptom;mejorar|改善|to improve;empeorar|恶化|to worsen;preocupado / preocupada|担心的|worried;tranquilo / tranquila|平静的|calm;dormir bien|睡好|to sleep well;beber agua|喝水|to drink water;sano / sana|健康的|healthy;el tratamiento|治疗|treatment',
+      'el correo|邮件|email;el adjunto|附件|attachment;la reunión|会议|meeting;la agenda|日程|agenda;el plazo|截止日期|deadline;la tarea|任务|task;el informe|报告|report;la presentación|演示|presentation;el equipo|团队|team;el cliente|客户|client;la prioridad|优先级|priority;la opinión|反馈意见|feedback;proponer|提出|to propose;negociar|协商|to negotiate;la entrevista|面试|interview',
+      'la matrícula|注册|enrolment;la biblioteca|图书馆|library;los apuntes|笔记|notes;repasar|复习|to review;el examen|考试|exam;aprobar|通过|to pass;suspender|不及格|to fail;explicar|解释|to explain;el capítulo|章节|chapter;el personaje|人物|character;el narrador|叙述者|narrator;describir|描述|to describe;la fotografía|照片|photograph;la escena|场景|scene;el detalle|细节|detail',
+      'el accidente|事故|accident;suceder|发生|to happen;elegir|选择|to choose;comparar|比较|to compare;preferir|更喜欢|to prefer;la opción|选项|option;la opinión|观点|opinion;la relación|关系|relationship;confiar|信任|to trust;discutir|争论|to argue;perdonar|原谅|to forgive;disculparse|道歉|to apologise;el acuerdo|同意|agreement;el desacuerdo|分歧|disagreement;respetar|尊重|to respect',
+      'aceptar|接受|to accept;rechazar|拒绝|to refuse;la fiesta|聚会|party;la publicación|帖子|post;el comentario|评论|comment;seguir|关注|to follow;la canción|歌曲|song;la letra|歌词|lyrics;el ritmo|节奏|rhythm;el director|导演|director;el episodio|一集|episode;el personaje|角色|character;la recomendación|推荐|recommendation;la reseña|评价|review;compartir|分享|to share',
+      'la noticia|新闻|news;el titular|标题|headline;la cifra|数字|figure;la fuente|来源|source;informar|报道|to report;la contaminación|污染|pollution;reciclar|回收利用|to recycle;la energía|能源|energy;el clima|气候|climate;la sequía|干旱|drought;el incendio|火灾|fire;proteger|保护|to protect;reducir|减少|to reduce;aumentar|增加|to increase;el gobierno|政府|government',
+      'devolver|退回|to return;cambiar|更换|to exchange;el recibo|收据|receipt;la garantía|保修|guarantee;averiado / averiada|坏掉的|broken;reparar|修理|to repair;el electrodoméstico|家电|appliance;la pantalla|屏幕|screen;la contraseña|密码|password;seguro / segura|安全的|secure;la valoración|评分|rating;la compra|购买|purchase;la oferta|优惠|offer;la entrega|递送|delivery;el mercado|市场|market',
+      'cancelar|取消|to cancel;el embarque|登机|boarding;el equipaje|行李|luggage;el seguro de viaje|旅行保险|travel insurance;la reserva|预订|reservation;la urgencia|紧急情况|urgency;la farmacia|药店|pharmacy;la receta|处方|prescription;el turno|班次|shift;el horario|时间表|schedule;el compañero|同事|colleague;resolver|解决|to resolve;confirmar|确认|to confirm;la demora|耽搁|delay;la atención|照顾|attention',
+      'la videollamada|视频通话|video call;el micrófono|麦克风|microphone;compartir pantalla|共享屏幕|to share screen;el objetivo|目标|objective;el resultado|结果|result;actualizar|更新|to update;colaborar|合作|to collaborate;la responsabilidad|责任|responsibility;el riesgo|风险|risk;la propuesta|提议|proposal;el resumen|总结|summary;el dato|数据|data;el gráfico|图表|chart;la conclusión|结论|conclusion;coordinar|协调|to coordinate',
+      'el pasado|过去|past;el presente|现在|present;el futuro|未来|future;quizá|也许|perhaps;probablemente|很可能|probably;la condición|条件|condition;si|如果|if;aunque|虽然|although;por eso|因此|therefore;sin embargo|然而|however;además|此外|in addition;la consecuencia|结果|consequence;la causa|原因|cause;predecir|预测|to predict;depender|取决于|to depend',
+      'la costumbre|习俗|custom;la tradición|传统|tradition;el plato típico|特色菜|local dish;el ingrediente|食材|ingredient;el sabor|味道|flavour;la ruta|路线|route;la visita guiada|导览|guided visit;la anécdota|轶事|anecdote;el argumento|情节|plot;la entrevista|采访|interview;el público|观众|audience;la cultura|文化|culture;la experiencia|体验|experience;local|当地的|local;recomendar|推荐|to recommend',
+      'la economía|经济|economy;el empleo|就业|employment;el salario|工资|salary;la inflación|通货膨胀|inflation;la inversión|投资|investment;la empresa|公司|company;el mercado|市场|market;el partido|比赛|match;el resultado|结果|result;el campeonato|锦标赛|championship;la ciencia|科学|science;la investigación|研究|research;el descubrimiento|发现|discovery;la encuesta|调查|survey;la tendencia|趋势|trend',
+      'el problema|问题|problem;la alternativa|替代方案|alternative;sugerir|建议|to suggest;conviene|最好|it is advisable;debería|应该|should;evitar|避免|to avoid;permitir|允许|to allow;la ventaja|优点|advantage;la desventaja|缺点|disadvantage;estar de acuerdo|同意|to agree;tomar una decisión|做决定|to make a decision;el impacto|影响|impact;participar|参与|to participate;mejorar|改进|to improve;la solución|解决办法|solution',
+      'el currículum|简历|CV;la habilidad|技能|skill;la experiencia laboral|工作经验|work experience;el logro|成就|achievement;la solicitud|申请|application;la reclamación|投诉|complaint;el reembolso|退款|refund;la atención al cliente|客服|customer service;la factura|账单|invoice;confirmar|确认|to confirm;adjuntar|附上|to attach;responder|回复|to reply;formal|正式的|formal;la entrevista|面试|interview;la contraseña|密码|password',
+      'el voluntario|志愿者|volunteer;el evento|活动|event;el vecino|邻居|neighbour;la emergencia|紧急情况|emergency;la policía|警察|police;perderse|迷路|to get lost;el consulado|领事馆|consulate;el billete|票|ticket;la maleta|行李箱|suitcase;el aviso|通知|notice;el hecho|事实|fact;el rumor|传闻|rumour;el significado|含义|meaning;el contexto|语境|context;aclarar|澄清|to clarify',
+      'primero|首先|first;después|之后|afterwards;mientras|同时|while;al final|最后|in the end;la idea principal|主旨|main idea;el detalle|细节|detail;el ejemplo|例子|example;explicar|解释|to explain;justificar|论证|to justify;comparar|比较|to compare;resumir|总结|to summarise;la conclusión|结论|conclusion;claro / clara|清楚的|clear;natural|自然的|natural;avanzar|进步|to progress'
+    ].map(pack => pack.split(';').map(item => { const [word, zh, en] = item.split('|'); return { word, zh, en }; }));
+
+    const expansionRows = `
+0::医院挂号与症状::Medical Registration and Symptoms::学会预约、登记并描述基本症状。
+0::银行与取款::Banking and Withdrawing Money::在银行办理常见事务并确认账户信息。
+0::邮局与寄件::Post Office and Sending Parcels::寄送物品、填写表格并确认地址。
+0::租房与看房::Renting and Viewing a Flat::看房、讨论租金和合同。
+0::邻里与社区::Neighbours and Community::和邻居交流社区生活与公共事务。
+1::家务与清洁::Housework and Cleaning::描述家务分工和清洁步骤。
+1::做饭步骤::Cooking Step by Step::按顺序说明简单烹饪过程。
+1::约朋友吃饭::Inviting Friends to Eat::邀请朋友、安排时间并点餐。
+1::生日与礼物::Birthdays and Gifts::庆祝生日、准备礼物并表达祝福。
+1::家庭决定::Family Decisions::讨论家庭计划、分工与不同意见。
+2::童年回忆::Childhood Memories::用过去时谈童年习惯和人物。
+2::描述习惯的变化::Changing Habits::比较以前与现在的生活习惯。
+2::过去的旅行::A Past Trip::按时间顺序讲述一次旅行。
+2::周末发生的事::What Happened at the Weekend::叙述周末事件并加入细节。
+2::难忘的一天::An Unforgettable Day::讲述一件突然发生并带来变化的事。
+3::开车与停车::Driving and Parking::处理开车、停车和道路上的情况。
+3::骑车与步行::Cycling and Walking::描述城市中更慢、更安全的出行方式。
+3::交通问题::Transport Problems::说明延误、错过班次并寻求帮助。
+3::酒店投诉::A Hotel Complaint::礼貌说明房间问题并要求解决。
+3::旅行建议::Travel Recommendations::推荐路线、住宿和出行安排。
+4::预约与看牙::Appointments and the Dentist::预约看牙并说明口腔不适。
+4::健康习惯::Healthy Habits::谈睡眠、喝水和日常健康习惯。
+4::运动计划::Exercise Plans::制定适合自己的运动计划。
+4::情绪与压力::Feelings and Stress::表达担心、疲惫与放松的方法。
+4::康复与建议::Recovery and Advice::理解治疗建议并描述改善情况。
+5::工作日程::Work Schedules::安排任务、会议和截止日期。
+5::邮件与附件::Email and Attachments::写一封含附件的简短工作邮件。
+5::会议表达::Speaking in Meetings::提出观点、确认重点并分配任务。
+5::项目进度::Project Progress::汇报进度、风险和下一步。
+5::求职与面试::Job Search and Interviews::介绍经验、技能和求职意向。
+6::学校注册::School Registration::完成注册并询问课程信息。
+6::学习方法::Study Methods::讨论笔记、复习和有效学习。
+6::考试与压力::Exams and Pressure::谈考试准备、结果和压力管理。
+6::阅读一个故事::Reading a Story::识别章节、人物和叙述者。
+6::描述一张照片::Describing a Photograph::用细节描述照片中的人和场景。
+7::讲述一次事故::Telling About an Accident::说明事故发生的经过和结果。
+7::比较两段经历::Comparing Experiences::比较选择、感受和不同结果。
+7::表达愿望与选择::Wishes and Choices::表达偏好、选择和理由。
+7::朋友关系::Friendships::讨论信任、误会和相处方式。
+7::家庭冲突::Family Conflict::礼貌表达分歧、道歉和理解。
+8::道歉与原谅::Apologies and Forgiveness::在社交场合道歉并回应。
+8::社交邀请::Social Invitations::接受或婉拒邀请并提出替代计划。
+8::电影评价::Reviewing a Film::谈导演、角色和推荐理由。
+8::电视剧人物::TV-Series Characters::描述人物关系和剧情发展。
+8::音乐与分享::Music and Sharing::讨论歌曲、歌词和社交媒体分享。
+9::新闻人物::People in the News::抓住新闻人物、来源和关键事实。
+9::新闻数字::Numbers in the News::理解标题中的数字、变化和比较。
+9::城市新闻::City News::理解本地服务、政策和社区报道。
+9::环境问题::Environmental Issues::谈污染、回收和保护行动。
+9::气候与极端天气::Climate and Extreme Weather::理解气候新闻中的风险和影响。
+10::饮食与健康::Food and Health::讨论购买、营养和产品选择。
+10::购物退换::Returns and Exchanges::在商店解释问题并退换商品。
+10::维修家电::Repairing Appliances::描述故障、保修和维修请求。
+10::数字安全::Digital Safety::处理密码、账户和安全提示。
+10::在线评论::Online Reviews::阅读评分、评价和配送信息。
+11::旅行计划变更::Changing Travel Plans::处理取消、延误和改期。
+11::机场延误::Airport Delays::询问登机、行李和延误信息。
+11::旅行中的生病::Getting Ill While Travelling::在旅行中寻找药店和医疗帮助。
+11::工作协商::Work Negotiation::协商时间、安排和责任分配。
+11::团队合作::Team Collaboration::确认同事、时间表和解决办法。
+12::电话会议::Video Meetings::使用视频会议的常用表达。
+12::报告要点::Key Points in a Report::概括目标、数据和结论。
+12::共享进度::Sharing Progress::更新团队、协调责任和风险。
+12::提出一个方案::Making a Proposal::提出方案并解释预期结果。
+12::数据与图表::Data and Charts::口头说明数据、图表和趋势。
+13::过去与现在::Past and Present::比较过去、现在和已经发生的变化。
+13::计划与预测::Plans and Predictions::使用可能性表达未来预测。
+13::条件与选择::Conditions and Choices::用如果、虽然和因此连接想法。
+13::原因与结果::Causes and Results::解释原因、结果和不同可能。
+13::连接词与逻辑::Connectors and Logic::让一段表达更清晰、更连贯。
+14::文化差异::Cultural Differences::比较习俗、传统和日常礼貌。
+14::节日传统::Festival Traditions::介绍节日、食物和庆祝方式。
+14::餐厅体验::A Restaurant Experience::评价特色菜、味道和服务。
+14::旅行故事复述::Retelling a Travel Story::用路线、细节和趣事复述旅行。
+14::播客采访::A Podcast Interview::听出采访主题、观点和推荐。
+15::经济新闻::Economic News::理解就业、工资和市场的基本报道。
+15::体育报道::Sports Reporting::听懂比赛、结果和赛后评论。
+15::科学新闻::Science News::识别研究、发现和数据来源。
+15::调查与趋势::Surveys and Trends::理解调查结果和变化趋势。
+15::公司与行业::Companies and Sectors::讨论企业、投资和行业变化。
+16::问题解决讨论::Problem-Solving Discussion::共同定义问题并比较方案。
+16::提出建议::Giving Advice::用礼貌方式提出建议和理由。
+16::同意与反对::Agreement and Disagreement::表达赞同、保留和反对意见。
+16::优点与缺点::Advantages and Disadvantages::比较不同方案的影响。
+16::公共议题讨论::Discussing Public Issues::谈参与、影响和改进措施。
+17::简历与技能::CV and Skills::介绍技能、经历和工作成就。
+17::面试复盘::Interview Review::总结面试表现和下一步行动。
+17::正式邮件::Formal Email::写正式申请、确认或回复邮件。
+17::电话投诉::Phone Complaint::通过电话说明问题并提出要求。
+17::客服与退款::Customer Service and Refunds::处理账单、退款和客服回复。
+18::社区活动::Community Activities::介绍社区活动、志愿者和邻居。
+18::旅行突发情况::Travel Emergencies::在陌生城市说明紧急情况并求助。
+18::新闻事实与传闻::Facts and Rumours in News::区分事实、传闻和消息来源。
+18::电影的隐含意思::Implied Meaning in Film::根据语境理解人物的隐含意思。
+18::播客长句::Long Podcast Sentences::在长句中抓主旨、细节和上下文。
+19::复述一段新闻::Retelling a News Item::按顺序复述新闻的主要内容。
+19::表达个人立场::Stating Your View::清楚表达观点、理由和例子。
+19::综合真实对话::Real-Life Mixed Dialogue::处理生活、工作和旅行中的连续对话。
+19::综合理解与表达::Integrated Comprehension and Expression::从真实内容中提取信息并回应。
+19::150 课毕业练习::150-Lesson Graduation Practice::综合运用日常交流、叙述、影视和新闻理解能力。
+`.trim().split('\n').map(row => {
+      const [pack, title, titleEn, goal] = row.split('::');
+      return { pack: Number(pack), title, titleEn, goal };
+    });
+
+    const expansionLessons = expansionRows.map((spec, index) => {
+      const pack = expansionPacks[spec.pack]; const offset = (index % 5) * 3;
+      const words = Array.from({ length: 10 }, (_, wordIndex) => ({ ...pack[(offset + wordIndex) % pack.length] }));
+      return { id: baseLessons.length + index + 1, title: spec.title, titleEn: spec.titleEn, goal: spec.goal, words: words.map(word => ({ ...word, pos: inferPos(word.word), note: inferNote(word.word), forms: inferForms(word.word) })) };
+    });
+    const lessons = [...baseLessons, ...expansionLessons];
 
     function inferPos(word) {
       if (/^(el |la |los |las |un |una )/.test(word)) return '名词';
@@ -435,6 +573,18 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       ];
     }
     function grammarFor(lesson) {
+      if (lesson.id > 50) {
+        if (isEnglish()) {
+          if (lesson.id <= 75) return ['Move from isolated sentences to short connected stories. Use time markers such as <strong>antes</strong>, <strong>mientras</strong> and <strong>de repente</strong>.', 'When a situation is practical, learn a complete request first: explain the problem, ask for help, then confirm the solution.'];
+          if (lesson.id <= 100) return ['Give a reason before your opinion: <strong>porque</strong>, <strong>por eso</strong> and <strong>sin embargo</strong> make your meaning clearer.', 'For past experiences, alternate background information with completed events instead of translating word by word.'];
+          if (lesson.id <= 125) return ['Use possibility and advice carefully: <strong>quizá</strong>, <strong>probablemente</strong>, <strong>debería</strong> and <strong>conviene</strong>.', 'When discussing work or travel, confirm who is responsible, when it happens and what the next step is.'];
+          return ['For media and news, separate facts, sources and opinions. First identify the main idea, then the supporting details.', 'Use connectors to give a longer answer: <strong>primero</strong>, <strong>además</strong>, <strong>sin embargo</strong> and <strong>al final</strong>.'];
+        }
+        if (lesson.id <= 75) return ['从单句升级到短故事：用 <strong>antes</strong>、<strong>mientras</strong>、<strong>de repente</strong> 等时间词连接事件。', '处理实际问题时，先说清情况，再提出请求，最后确认解决办法。'];
+        if (lesson.id <= 100) return ['表达观点前先给理由：<strong>porque</strong>、<strong>por eso</strong>、<strong>sin embargo</strong> 能让表达更清晰。', '叙述经历时，把背景信息和已经完成的事件交替表达，不必逐词翻译。'];
+        if (lesson.id <= 125) return ['谨慎表达可能性和建议：<strong>quizá</strong>、<strong>probablemente</strong>、<strong>debería</strong>、<strong>conviene</strong>。', '谈工作或旅行安排时，确认谁负责、什么时候发生、下一步是什么。'];
+        return ['听媒体和新闻时，区分事实、消息来源和观点；先抓主旨，再听支持细节。', '用连接词组织更长回答：<strong>primero</strong>、<strong>además</strong>、<strong>sin embargo</strong>、<strong>al final</strong>。'];
+      }
       if (isEnglish()) {
         if (lesson.id <= 10) return ['Learn nouns together with their articles: <strong>el</strong> is often masculine and <strong>la</strong> is often feminine.', 'Memorise high-frequency chunks rather than isolated words: for example, <strong>me llamo</strong> and <strong>¿cuánto cuesta?</strong>.'];
         if (lesson.id <= 24) return ['For requests, first learn complete polite sentences: <strong>Quiero…</strong>, <strong>¿Puede…?</strong> and <strong>Por favor.</strong>', 'When a verb changes form, first learn to recognise common forms in context; do not rush to memorise a whole conjugation table.'];
@@ -469,8 +619,8 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       return forms[word.word] || [];
     }
     const labels = {
-      zh: { siteName:'西班牙语 50 课', siteIntro:'每天 10 个重点词。前 30 课建立日常交流能力，后 20 课练电视剧、电影、播客与新闻理解。', switch:'English', lesson:'第', lessonSuffix:'课', daily:'每日 10 词', goal:'学习本主题的 10 个高频词，并在例句和对话中练习。', previous:'← 上一课', next:'下一课 →', termHeading:'单词跟读', termThree:'每词读 3 遍', termOne:'每词读 1 遍', stop:'停止', wordHeading:'10 个单词卡', wordNote:'点“播放”可单独听词。名词会保留冠词；动词卡会显示本课常用形式。', exampleHeading:'5 个例句', dialogueHeading:'微型对话', grammarHeading:'今日语法', play:'播放', playSentence:'播放这句', pos:'词性：', note:'提示：', forms:'常用形式：', speed:'速度：' },
-      en: { siteName:'Spanish in 50 Lessons', siteIntro:'Ten key words a day. The first 30 lessons build everyday conversation; the final 20 develop TV, film, podcast and news comprehension.', switch:'中文', lesson:'Lesson', lessonSuffix:'', daily:'10 words a day', goal:'Learn 10 high-frequency words for this theme and practise them in examples and dialogue.', previous:'← Previous lesson', next:'Next lesson →', termHeading:'Word practice', termThree:'Read each word 3 times', termOne:'Read each word once', stop:'Stop', wordHeading:'10 word cards', wordNote:'Use Play to hear one word. Nouns keep their articles; verb cards show common forms when available.', exampleHeading:'5 example sentences', dialogueHeading:'Mini dialogue', grammarHeading:'Grammar for today', play:'Play', playSentence:'Play this line', pos:'Part of speech: ', note:'Note: ', forms:'Common forms: ', speed:'Speed: ' }
+      zh: { siteName:'西班牙语 150 课', siteIntro:'每天 10 个重点词。从日常交流逐步提升到叙述、影视、播客与新闻理解。', switch:'English', lesson:'第', lessonSuffix:'课', daily:'每日 10 词', goal:'学习本主题的 10 个高频词，并在例句和对话中练习。', previous:'← 上一课', next:'下一课 →', termHeading:'单词跟读', termThree:'每词读 3 遍', termOne:'每词读 1 遍', stop:'停止', wordHeading:'10 个单词卡', wordNote:'点“播放”可单独听词。名词会保留冠词；动词卡会显示本课常用形式。', exampleHeading:'5 个例句', dialogueHeading:'微型对话', grammarHeading:'今日语法', play:'播放', playSentence:'播放这句', pos:'词性：', note:'提示：', forms:'常用形式：', speed:'速度：' },
+      en: { siteName:'Spanish in 150 Lessons', siteIntro:'Ten key words a day. The course moves gradually from everyday conversation to narrative, TV, film, podcasts and news comprehension.', switch:'中文', lesson:'Lesson', lessonSuffix:'', daily:'10 words a day', goal:'Learn 10 high-frequency words for this theme and practise them in examples and dialogue.', previous:'← Previous lesson', next:'Next lesson →', termHeading:'Word practice', termThree:'Read each word 3 times', termOne:'Read each word once', stop:'Stop', wordHeading:'10 word cards', wordNote:'Use Play to hear one word. Nouns keep their articles; verb cards show common forms when available.', exampleHeading:'5 example sentences', dialogueHeading:'Mini dialogue', grammarHeading:'Grammar for today', play:'Play', playSentence:'Play this line', pos:'Part of speech: ', note:'Note: ', forms:'Common forms: ', speed:'Speed: ' }
     };
     let spanishVoices = [];
     function loadVoices() { spanishVoices = speechSynthesis.getVoices().filter(v => v.lang.toLowerCase().startsWith('es')); }
@@ -609,11 +759,12 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       const studyDay = dailyDayNumber();
       const finished = dailyMode ? state.dailyStudy.completedDays.includes(studyDay) : state.completedLessons.includes(state.lessonId);
       $('#course-progress-heading').textContent = localized(dailyMode ? '学习进度与今日打卡' : '学习进度', dailyMode ? 'Learning progress and today\'s check-in' : 'Learning progress');
+      $('#course-progress').max = lessons.length;
       $('#course-progress').value = completed;
       $('#course-progress-text').textContent = signedIn
         ? (dailyMode
-          ? localized(`总课程完成 ${completed} / 50；第 ${studyDay} 天的学习和复习会自动同步。`, `${completed} / 50 lessons completed; day ${studyDay} learning and reviews sync automatically.`)
-          : localized(`已完成 ${completed} / 50 课；当前位置：第 ${state.lessonId} 课。`, `${completed} / 50 lessons completed; you are at lesson ${state.lessonId}.`))
+          ? localized(`总课程完成 ${completed} / ${lessons.length}；第 ${studyDay} 天的学习和复习会自动同步。`, `${completed} / ${lessons.length} lessons completed; day ${studyDay} learning and reviews sync automatically.`)
+          : localized(`已完成 ${completed} / ${lessons.length} 课；当前位置：第 ${state.lessonId} 课。`, `${completed} / ${lessons.length} lessons completed; you are at lesson ${state.lessonId}.`))
         : (dailyMode
           ? localized('每日计划暂存在此浏览器；登录后可同步到不同设备。', 'This daily plan is stored in this browser until you sign in to sync it across devices.')
           : localized('登录或注册后，可在不同设备继续学习。', 'Sign in or register to continue on any device.'));
@@ -802,7 +953,8 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
     }
     function renderStatic() {
       const l = labels[state.lang];
-      $('#site-name').textContent = l.siteName; $('#site-intro').textContent = l.siteIntro; $('#language-select').value = state.lang;
+      $('#site-name').textContent = l.siteName; $('#site-intro').textContent = l.siteIntro; $('#language-toggle').textContent = 'Language ▾';
+      document.querySelectorAll('.language-option').forEach(button => button.classList.toggle('active', button.dataset.lang === state.lang));
       $('#study-mode-label').textContent = localized('学习模式', 'Study mode');
       $('#mode-course').textContent = localized('按课程学习', 'Course mode');
       $('#mode-daily').textContent = localized('每日学习', 'Daily mode');
@@ -922,7 +1074,17 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
     });
     $('#daily-next').addEventListener('click', () => { nextDailyQuiz(); renderDailyMode(); });
     $('#daily-answer').addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); void checkDailyAnswer(); } });
-    $('#language-select').addEventListener('change', event => { state.lang = event.target.value === 'en' ? 'en' : 'zh'; localStorage.setItem('spanish-course-language', state.lang); render(); });
+    $('#language-toggle').addEventListener('click', () => {
+      const menu = $('#language-menu'); const opening = menu.hidden;
+      menu.hidden = !opening; $('#language-toggle').setAttribute('aria-expanded', String(opening));
+    });
+    document.querySelectorAll('.language-option').forEach(button => button.addEventListener('click', () => {
+      state.lang = button.dataset.lang === 'en' ? 'en' : 'zh'; localStorage.setItem('spanish-course-language', state.lang);
+      $('#language-menu').hidden = true; $('#language-toggle').setAttribute('aria-expanded', 'false'); render();
+    }));
+    document.addEventListener('click', event => {
+      if (!event.target.closest('.language-picker')) { $('#language-menu').hidden = true; $('#language-toggle').setAttribute('aria-expanded', 'false'); }
+    });
     $('#account-toggle').addEventListener('click', () => {
       if (!state.user) return openAuthModal('register');
       $('#account-panel').hidden = !$('#account-panel').hidden;

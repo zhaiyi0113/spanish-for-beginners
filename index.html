@@ -716,42 +716,16 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       speechSynthesis.cancel();
     }
     function voiceFor(role = 'A') {
+      loadVoices();
       const preferred = role === 'B' ? maleVoiceNames : femaleVoiceNames;
-      return spanishVoices.find(voice => preferred.some(name => voice.name.toLowerCase().includes(name))) || null;
+      return spanishVoices.find(voice => preferred.some(name => voice.name.toLowerCase().includes(name))) || spanishVoices[0] || null;
     }
-    function waitForVoice(role) {
-      return new Promise(resolve => {
-        let settled = false;
-        const finish = voice => {
-          if (settled) return;
-          settled = true;
-          speechSynthesis.removeEventListener('voiceschanged', refresh);
-          clearTimeout(timeout);
-          resolve(voice);
-        };
-        const refresh = () => {
-          loadVoices();
-          const preferredVoice = voiceFor(role);
-          if (preferredVoice) finish(preferredVoice);
-        };
-        const timeout = setTimeout(() => {
-          loadVoices();
-          // A browser can delay exposing its Windows voices. If it still does not
-          // expose a named female voice, keep audio working with its Spanish default.
-          finish(voiceFor(role) || spanishVoices[0] || null);
-        }, 1500);
-        speechSynthesis.addEventListener('voiceschanged', refresh);
-        refresh();
-      });
-    }
-    async function speak(text, { rate = 1, role = 'A' } = {}) {
+    function speak(text, { rate = 1, role = 'A' } = {}) {
       stopAll();
       const myRun = state.run;
-      const voice = await waitForVoice(role);
-      if (myRun !== state.run || !voice) return false;
       return new Promise(resolve => {
         const utterance = new SpeechSynthesisUtterance(text.replace(/[«»]/g, ''));
-        utterance.lang = 'es-ES'; utterance.rate = rate; utterance.voice = voice;
+        utterance.lang = 'es-ES'; utterance.rate = rate; utterance.voice = voiceFor(role);
         utterance.onend = () => resolve(myRun === state.run);
         utterance.onerror = () => resolve(false);
         speechSynthesis.speak(utterance);
@@ -762,10 +736,8 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       for (let i = 0; i < items.length; i++) {
         if (myRun !== state.run) return false;
         onEach?.(items[i], i);
-        const voice = await waitForVoice(items[i].role || options.role || 'A');
-        if (myRun !== state.run || !voice) return false;
         const utterance = new SpeechSynthesisUtterance(items[i].text || items[i]);
-        utterance.lang = 'es-ES'; utterance.rate = options.rate || 1; utterance.voice = voice;
+        utterance.lang = 'es-ES'; utterance.rate = options.rate || 1; utterance.voice = voiceFor(items[i].role || options.role || 'A');
         const played = await new Promise(resolve => { utterance.onend = () => resolve(true); utterance.onerror = () => resolve(false); speechSynthesis.speak(utterance); });
         if (!played || myRun !== state.run) return false;
         if (gap && (i < items.length - 1 || options.pauseAfterLast)) await pause(gap);

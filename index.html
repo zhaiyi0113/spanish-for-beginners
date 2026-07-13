@@ -706,6 +706,8 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       en: { siteName:'Spanish learning', siteIntro:'Ten key words a day. The course moves gradually from everyday conversation to narrative, TV, film, podcasts and news comprehension.', switch:'中文', lesson:'Lesson', lessonSuffix:'', daily:'10 words a day', goal:'Learn 10 high-frequency words for this theme and practise them in examples and dialogue.', previous:'← Previous lesson', next:'Next lesson →', termHeading:'Word practice', termThree:'Read each word 3 times', termOne:'Read each word once', stop:'Stop', wordHeading:'10 word cards', wordNote:'Use Play to hear one word. Nouns keep their articles; verb cards show common forms when available.', exampleHeading:'5 example sentences', dialogueHeading:'Mini dialogue', grammarHeading:'Grammar for today', play:'Play', playSentence:'Play this line', pos:'Part of speech: ', note:'Note: ', forms:'Common forms: ', speed:'Speed: ' }
     };
     let spanishVoices = [];
+    const femaleVoiceNames = ['helena', 'laura', 'sabina', 'elvira', 'dalia', 'paulina', 'sofia', 'lucia', 'marta'];
+    const maleVoiceNames = ['pablo', 'raul', 'alvaro', 'jorge', 'diego'];
     function loadVoices() { spanishVoices = speechSynthesis.getVoices().filter(v => v.lang.toLowerCase().startsWith('es')); }
     loadVoices(); speechSynthesis.addEventListener('voiceschanged', loadVoices);
     const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -713,16 +715,27 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       state.run += 1;
       speechSynthesis.cancel();
     }
-    function voiceFor(role) {
-      const preferred = role === 'B' ? ['Pablo', 'Raul'] : ['Laura', 'Helena', 'Sabina'];
-      return preferred.map(name => spanishVoices.find(v => v.name.includes(name))).find(Boolean) || spanishVoices[0];
+    function voiceFor(role = 'A') {
+      const preferred = role === 'B' ? maleVoiceNames : femaleVoiceNames;
+      return spanishVoices.find(voice => preferred.some(name => voice.name.toLowerCase().includes(name))) || null;
     }
-    function speak(text, { rate = 1, role = 'A' } = {}) {
+    async function waitForVoice(role) {
+      for (let attempt = 0; attempt < 8; attempt += 1) {
+        loadVoices();
+        const voice = voiceFor(role);
+        if (voice) return voice;
+        await pause(100);
+      }
+      return null;
+    }
+    async function speak(text, { rate = 1, role = 'A' } = {}) {
       stopAll();
       const myRun = state.run;
+      const voice = await waitForVoice(role);
+      if (myRun !== state.run || !voice) return false;
       return new Promise(resolve => {
         const utterance = new SpeechSynthesisUtterance(text.replace(/[«»]/g, ''));
-        utterance.lang = 'es-ES'; utterance.rate = rate; utterance.voice = voiceFor(role) || null;
+        utterance.lang = 'es-ES'; utterance.rate = rate; utterance.voice = voice;
         utterance.onend = () => resolve(myRun === state.run);
         utterance.onerror = () => resolve(false);
         speechSynthesis.speak(utterance);
@@ -733,8 +746,10 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       for (let i = 0; i < items.length; i++) {
         if (myRun !== state.run) return false;
         onEach?.(items[i], i);
+        const voice = await waitForVoice(items[i].role || options.role || 'A');
+        if (myRun !== state.run || !voice) return false;
         const utterance = new SpeechSynthesisUtterance(items[i].text || items[i]);
-        utterance.lang = 'es-ES'; utterance.rate = options.rate || 1; utterance.voice = voiceFor(items[i].role || options.role || 'A') || null;
+        utterance.lang = 'es-ES'; utterance.rate = options.rate || 1; utterance.voice = voice;
         const played = await new Promise(resolve => { utterance.onend = () => resolve(true); utterance.onerror = () => resolve(false); speechSynthesis.speak(utterance); });
         if (!played || myRun !== state.run) return false;
         if (gap && (i < items.length - 1 || options.pauseAfterLast)) await pause(gap);

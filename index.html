@@ -18,6 +18,23 @@
     .sidebar h1 { margin: 0 0 10px; font-size: 23px; }
     .sidebar p { margin: 0 0 18px; color: #d8e6ff; font-size: 14px; line-height: 1.6; }
     .language-toggle { position: fixed; top: 18px; right: 22px; z-index: 20; margin: 0; background: #fff; color: #12315f; font-weight: 750; box-shadow: 0 4px 14px rgba(18, 49, 95, .2); }
+    .account-toggle { position: fixed; top: 18px; right: 126px; z-index: 20; margin: 0; background: #1557c0; color: #fff; font-weight: 750; box-shadow: 0 4px 14px rgba(18, 49, 95, .2); }
+    .account-panel { position: fixed; top: 64px; right: 22px; z-index: 21; width: min(300px, calc(100vw - 32px)); padding: 16px; border: 1px solid #d7e1f0; border-radius: 14px; background: #fff; color: #1f2937; box-shadow: 0 10px 30px rgba(19, 49, 95, .2); }
+    .account-panel p { margin: 0 0 12px; color: #526174; line-height: 1.5; }
+    .account-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .auth-modal { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(14, 30, 55, .48); }
+    .auth-dialog { position: relative; width: min(440px, 100%); padding: 26px; border-radius: 18px; background: #fff; box-shadow: 0 20px 60px rgba(11, 27, 49, .35); }
+    .auth-dialog h3 { margin: 0 36px 8px 0; font-size: 25px; }
+    .auth-dialog p { margin: 0 0 16px; color: #56677d; line-height: 1.55; }
+    .auth-close { position: absolute; top: 13px; right: 13px; padding: 4px 9px; background: #edf2f8; color: #39516f; font-size: 22px; line-height: 1; }
+    .auth-form { display: grid; gap: 12px; }
+    .auth-form label { display: grid; gap: 5px; color: #344860; font-size: 14px; font-weight: 700; }
+    .auth-form input { width: 100%; padding: 10px 11px; border: 1px solid #bac9dc; border-radius: 9px; font: inherit; }
+    .auth-status { min-height: 22px; margin: 0; color: #b42318; font-size: 14px; }
+    .auth-switch { margin-top: 4px; padding: 0; background: transparent; color: #1557c0; text-align: left; text-decoration: underline; }
+    .course-progress { display: grid; gap: 10px; }
+    .course-progress progress { width: 100%; height: 15px; accent-color: #1557c0; }
+    [hidden] { display: none !important; }
     .lesson-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .lesson-link { display: block; min-height: 64px; padding: 9px; border-radius: 10px; background: rgba(255,255,255,.1); color: #fff; text-decoration: none; line-height: 1.35; }
     .lesson-link:hover, .lesson-link.active { background: #fff; color: #12315f; }
@@ -60,6 +77,8 @@
       .lesson-link { min-height: 48px; padding: 6px; }
       .lesson-name { display: none; }
       .language-toggle { top: 12px; right: 12px; }
+      .account-toggle { top: 12px; right: 104px; }
+      .account-panel { top: 58px; right: 12px; }
       main { padding: 28px 16px 46px; }
       .word-grid { grid-template-columns: 1fr; }
     }
@@ -71,12 +90,23 @@
       <h1 id="site-name">西班牙语 50 课</h1>
       <p id="site-intro">每天 10 个重点词。前 30 课建立日常交流能力，后 20 课练电视剧、电影、播客与新闻理解。</p>
       <button id="language-toggle" class="language-toggle" type="button">English</button>
+      <button id="account-toggle" class="account-toggle" type="button">登录 / 注册</button>
+      <div id="account-panel" class="account-panel" hidden>
+        <p id="account-summary"></p>
+        <div class="account-actions"><button id="account-open" class="primary" type="button">登录 / 注册</button><button id="logout" class="secondary" type="button" hidden>退出登录</button></div>
+      </div>
       <nav id="lesson-nav" class="lesson-grid" aria-label="选择课程"></nav>
     </aside>
     <main>
       <p class="eyebrow" id="lesson-number"></p>
       <h2 id="lesson-title"></h2>
       <p id="lesson-goal" class="goal"></p>
+      <section class="panel course-progress">
+        <h3 id="course-progress-heading">学习进度</h3>
+        <p id="course-progress-text" class="note">登录或注册后，可在不同设备继续学习。</p>
+        <progress id="course-progress" max="50" value="0"></progress>
+        <div class="controls"><button id="complete-lesson" class="secondary" type="button">登录后记录本课</button></div>
+      </section>
       <div class="nav-row">
         <button id="previous" class="secondary" type="button">← 上一课</button>
         <button id="next" class="primary" type="button">下一课 →</button>
@@ -133,7 +163,39 @@
     </main>
   </div>
 
-  <script>
+  <div id="auth-modal" class="auth-modal" hidden>
+    <section class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="auth-heading">
+      <button id="auth-close" class="auth-close" type="button" aria-label="关闭">×</button>
+      <h3 id="auth-heading">创建学习账号</h3>
+      <p id="auth-hint">使用用户名、邮箱和密码创建账号；密码由 Firebase 安全管理。</p>
+      <form id="auth-form" class="auth-form">
+        <label id="auth-name-row">用户名<input id="auth-name" type="text" autocomplete="nickname" minlength="2" maxlength="40" required></label>
+        <label>邮箱<input id="auth-email" type="email" autocomplete="email" required></label>
+        <label>密码<input id="auth-password" type="password" autocomplete="new-password" minlength="6" required></label>
+        <p id="auth-status" class="auth-status" aria-live="polite"></p>
+        <button id="auth-submit" class="primary" type="submit">创建账号</button>
+        <button id="auth-switch" class="auth-switch" type="button">已有账号？登录</button>
+      </form>
+    </section>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js';
+    import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: 'AIzaSyDz8dti_WZdyxuKw8aCC5WxgrSCnGnvDos',
+      authDomain: 'spanish-for-beginners-60425.firebaseapp.com',
+      projectId: 'spanish-for-beginners-60425',
+      storageBucket: 'spanish-for-beginners-60425.firebasestorage.app',
+      messagingSenderId: '118725590352',
+      appId: '1:118725590352:web:ebe4866bad42cc7b7e8055'
+    };
+    const firebaseApp = initializeApp(firebaseConfig);
+    const auth = getAuth(firebaseApp);
+    const db = getFirestore(firebaseApp);
+
     const rows = `
 初次见面与做客::学会打招呼、介绍名字，并在朋友家做简单招待。::hola=你好;llamarse=叫做;cómo=怎样;el amigo / la amiga=朋友;la casa=家;el vino=葡萄酒;querer=想要;sí=是的;gracias=谢谢;venir=来
 身份、国籍与城市::介绍自己来自哪里、住在哪里。::ser=是;de=来自;español / española=西班牙人;chino / china=中国人;la nacionalidad=国籍;vivir=居住;la ciudad=城市;aquí=这里;allí=那里;conocer=认识
@@ -311,7 +373,7 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       return ['听影视或新闻时，先抓名词、动词和数字等关键词，再回到上下文猜整体意思。', '不认识的词先不要暂停：听完一句或一小段后，再判断它是否真的影响理解。'];
     }
 
-    const state = { lessonId: 1, lang: 'zh', rate: { examples: 1, dialogue: 1 }, dialogueStart: 0, run: 0 };
+    const state = { lessonId: 1, lang: 'zh', rate: { examples: 1, dialogue: 1 }, dialogueStart: 0, run: 0, user: null, completedLessons: [], authMode: 'register' };
     const isEnglish = () => state.lang === 'en';
     const meaningFor = word => isEnglish() ? word.en : word.zh;
     const translationFor = item => isEnglish() ? item.en : item.zh;
@@ -372,6 +434,115 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
     const $ = selector => document.querySelector(selector);
     function currentLesson() { return lessons[state.lessonId - 1]; }
     const localized = (zh, en) => isEnglish() ? en : zh;
+
+    function accountName(user = state.user) {
+      return user?.displayName || user?.email?.split('@')[0] || localized('学习者', 'Learner');
+    }
+    function renderAccount() {
+      const signedIn = Boolean(state.user);
+      $('#account-toggle').textContent = signedIn ? accountName() : localized('登录 / 注册', 'Sign in / Register');
+      $('#account-summary').textContent = signedIn
+        ? localized(`你好，${accountName()}。你的学习进度会自动同步。`, `Hello, ${accountName()}. Your learning progress syncs automatically.`)
+        : localized('创建账号后，可在不同设备继续学习。', 'Create an account to continue on any device.');
+      $('#account-open').hidden = signedIn;
+      $('#account-open').textContent = localized('登录 / 注册', 'Sign in / Register');
+      $('#logout').hidden = !signedIn;
+      $('#logout').textContent = localized('退出登录', 'Sign out');
+    }
+    function renderProgress() {
+      const signedIn = Boolean(state.user);
+      const completed = state.completedLessons.length;
+      const finished = state.completedLessons.includes(state.lessonId);
+      $('#course-progress-heading').textContent = localized('学习进度', 'Learning progress');
+      $('#course-progress').value = completed;
+      $('#course-progress-text').textContent = signedIn
+        ? localized(`已完成 ${completed} / 50 课；当前位置：第 ${state.lessonId} 课。`, `${completed} / 50 lessons completed; you are at lesson ${state.lessonId}.`)
+        : localized('登录或注册后，可在不同设备继续学习。', 'Sign in or register to continue on any device.');
+      $('#complete-lesson').textContent = !signedIn
+        ? localized('登录后记录本课', 'Sign in to record this lesson')
+        : finished ? localized('取消完成标记', 'Remove completion mark') : localized('完成本课', 'Mark this lesson complete');
+      $('#complete-lesson').className = signedIn && !finished ? 'primary' : 'secondary';
+    }
+    function updateAuthForm() {
+      const registering = state.authMode === 'register';
+      $('#auth-heading').textContent = registering ? localized('创建学习账号', 'Create a learning account') : localized('登录学习账号', 'Sign in to your account');
+      $('#auth-hint').textContent = registering
+        ? localized('使用用户名、邮箱和密码创建账号；密码由 Firebase 安全管理。', 'Create an account with a display name, email and password. Firebase manages the password securely.')
+        : localized('使用注册时的邮箱和密码登录。', 'Use the email address and password you registered with.');
+      $('#auth-name-row').hidden = !registering;
+      $('#auth-name').required = registering;
+      $('#auth-password').autocomplete = registering ? 'new-password' : 'current-password';
+      $('#auth-submit').textContent = registering ? localized('创建账号', 'Create account') : localized('登录', 'Sign in');
+      $('#auth-switch').textContent = registering ? localized('已有账号？登录', 'Already have an account? Sign in') : localized('没有账号？创建一个', 'No account yet? Create one');
+    }
+    function openAuthModal(mode = 'register') {
+      state.authMode = mode;
+      $('#account-panel').hidden = true;
+      $('#auth-status').textContent = '';
+      updateAuthForm();
+      $('#auth-modal').hidden = false;
+      (mode === 'register' ? $('#auth-name') : $('#auth-email')).focus();
+    }
+    function closeAuthModal() { $('#auth-modal').hidden = true; $('#auth-form').reset(); $('#auth-status').textContent = ''; }
+    function authErrorMessage(error) {
+      const code = error?.code || '';
+      if (code === 'auth/email-already-in-use') return localized('这个邮箱已经注册，请直接登录。', 'This email is already registered. Please sign in.');
+      if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') return localized('邮箱或密码不正确。', 'The email address or password is incorrect.');
+      if (code === 'auth/weak-password') return localized('密码至少需要 6 个字符。', 'Your password needs at least 6 characters.');
+      if (code === 'auth/invalid-email') return localized('请输入有效的邮箱地址。', 'Enter a valid email address.');
+      if (code === 'auth/network-request-failed') return localized('网络连接失败，请稍后重试。', 'Network connection failed. Please try again.');
+      return localized('暂时无法完成操作，请稍后重试。', 'We could not complete that action. Please try again.');
+    }
+    async function saveProgress({ includeCreatedAt = false } = {}) {
+      if (!state.user) return;
+      const completedLessons = [...new Set(state.completedLessons)].filter(id => Number.isInteger(id) && id >= 1 && id <= lessons.length).sort((a, b) => a - b);
+      state.completedLessons = completedLessons;
+      const data = { displayName: accountName(), lastLesson: state.lessonId, completedLessons, updatedAt: serverTimestamp() };
+      if (includeCreatedAt) data.createdAt = serverTimestamp();
+      await setDoc(doc(db, 'users', state.user.uid), data, { merge: true });
+    }
+    async function loadProgress(user) {
+      try {
+        const snapshot = await getDoc(doc(db, 'users', user.uid));
+        const saved = snapshot.exists() ? snapshot.data() : {};
+        state.completedLessons = Array.isArray(saved.completedLessons) ? saved.completedLessons.filter(id => Number.isInteger(id) && id >= 1 && id <= lessons.length) : [];
+        if (Number.isInteger(saved.lastLesson) && saved.lastLesson >= 1 && saved.lastLesson <= lessons.length) {
+          state.lessonId = saved.lastLesson;
+          localStorage.setItem('spanish-course-lesson', state.lessonId);
+          history.replaceState(null, '', `#leccion-${state.lessonId}`);
+        }
+      } catch (error) {
+        $('#course-progress-text').textContent = localized('进度暂时无法同步，请稍后再试。', 'Progress cannot sync right now. Please try again later.');
+      }
+      render();
+    }
+    async function handleAuthSubmit(event) {
+      event.preventDefault();
+      const email = $('#auth-email').value.trim();
+      const password = $('#auth-password').value;
+      const name = $('#auth-name').value.trim();
+      $('#auth-status').textContent = '';
+      $('#auth-submit').disabled = true;
+      try {
+        if (state.authMode === 'register') {
+          if (name.length < 2) throw { code: 'display-name-too-short' };
+          const credential = await createUserWithEmailAndPassword(auth, email, password);
+          await updateProfile(credential.user, { displayName: name });
+          state.user = auth.currentUser;
+          state.completedLessons = [];
+          await saveProgress({ includeCreatedAt: true });
+        } else {
+          await signInWithEmailAndPassword(auth, email, password);
+        }
+        closeAuthModal();
+      } catch (error) {
+        $('#auth-status').textContent = error?.code === 'display-name-too-short'
+          ? localized('用户名至少需要 2 个字符。', 'Your display name needs at least 2 characters.')
+          : authErrorMessage(error);
+      } finally {
+        $('#auth-submit').disabled = false;
+      }
+    }
     function renderStatic() {
       const l = labels[state.lang];
       $('#site-name').textContent = l.siteName; $('#site-intro').textContent = l.siteIntro; $('#language-toggle').textContent = l.switch;
@@ -382,6 +553,7 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       document.querySelectorAll('.stop-all').forEach(button => button.textContent = l.stop);
       document.querySelectorAll('.speed-controls span').forEach(span => span.textContent = l.speed);
       $('#previous').textContent = $('#previous-bottom').textContent = l.previous; $('#next').textContent = $('#next-bottom').textContent = l.next;
+      renderAccount(); renderProgress(); updateAuthForm();
     }
     function renderNav() {
       const l = labels[state.lang];
@@ -424,11 +596,36 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
     $('#dialogue-progress').addEventListener('input', event => { stopAll(); const value = Number(event.target.value); state.dialogueStart = value === 5 ? 0 : value; $('#dialogue-position').textContent = value === 5 ? localized('已到结尾；再次播放会从第一句开始', 'At the end; play starts again from line one') : localized(`从第 ${value + 1} / 5 句开始播放`, `Start from line ${value + 1} / 5`); });
     document.querySelectorAll('.speed-controls').forEach(group => group.addEventListener('click', event => { const button = event.target.closest('.speed'); if (!button) return; const target = group.dataset.target; state.rate[target] = Number(button.dataset.rate); group.querySelectorAll('.speed').forEach(b => b.classList.toggle('active', b === button)); }));
     document.querySelectorAll('.stop-all').forEach(button => button.addEventListener('click', () => { stopAll(); $('#term-status').textContent = localized('已停止。', 'Stopped.'); $('#example-status').textContent = localized('已停止。', 'Stopped.'); $('#dialogue-status').textContent = localized('已停止。', 'Stopped.'); }));
-    function selectLesson(id) { state.lessonId = Math.min(lessons.length, Math.max(1, id)); history.replaceState(null, '', `#leccion-${state.lessonId}`); localStorage.setItem('spanish-course-lesson', state.lessonId); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function selectLesson(id) { state.lessonId = Math.min(lessons.length, Math.max(1, id)); history.replaceState(null, '', `#leccion-${state.lessonId}`); localStorage.setItem('spanish-course-lesson', state.lessonId); void saveProgress(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
     $('#lesson-nav').addEventListener('click', event => { const link = event.target.closest('[data-lesson]'); if (!link) return; event.preventDefault(); selectLesson(Number(link.dataset.lesson)); });
     ['previous', 'previous-bottom'].forEach(id => $(`#${id}`).addEventListener('click', () => selectLesson(state.lessonId - 1)));
     ['next', 'next-bottom'].forEach(id => $(`#${id}`).addEventListener('click', () => selectLesson(state.lessonId + 1)));
     $('#language-toggle').addEventListener('click', () => { state.lang = isEnglish() ? 'zh' : 'en'; localStorage.setItem('spanish-course-language', state.lang); render(); });
+    $('#account-toggle').addEventListener('click', () => {
+      if (!state.user) return openAuthModal('register');
+      $('#account-panel').hidden = !$('#account-panel').hidden;
+    });
+    $('#account-open').addEventListener('click', () => openAuthModal('register'));
+    $('#logout').addEventListener('click', async () => { await signOut(auth); $('#account-panel').hidden = true; });
+    $('#auth-close').addEventListener('click', closeAuthModal);
+    $('#auth-modal').addEventListener('click', event => { if (event.target === $('#auth-modal')) closeAuthModal(); });
+    $('#auth-switch').addEventListener('click', () => { state.authMode = state.authMode === 'register' ? 'login' : 'register'; $('#auth-status').textContent = ''; updateAuthForm(); });
+    $('#auth-form').addEventListener('submit', handleAuthSubmit);
+    $('#complete-lesson').addEventListener('click', async () => {
+      if (!state.user) return openAuthModal('register');
+      const lessonId = state.lessonId;
+      state.completedLessons = state.completedLessons.includes(lessonId)
+        ? state.completedLessons.filter(id => id !== lessonId)
+        : [...state.completedLessons, lessonId];
+      renderProgress();
+      try { await saveProgress(); }
+      catch (error) { $('#course-progress-text').textContent = localized('保存进度失败，请稍后再试。', 'Saving progress failed. Please try again later.'); }
+    });
+    onAuthStateChanged(auth, user => {
+      state.user = user;
+      if (user) { void loadProgress(user); }
+      else { state.completedLessons = []; $('#account-panel').hidden = true; renderAccount(); renderProgress(); }
+    });
     const hashId = Number(location.hash.replace('#leccion-', '')); const savedId = Number(localStorage.getItem('spanish-course-lesson')); const savedLanguage = localStorage.getItem('spanish-course-language');
     state.lang = savedLanguage === 'en' ? 'en' : 'zh';
     state.lessonId = lessons.some(l => l.id === hashId) ? hashId : (lessons.some(l => l.id === savedId) ? savedId : 1);

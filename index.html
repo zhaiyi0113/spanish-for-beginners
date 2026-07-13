@@ -34,6 +34,17 @@
     .auth-switch { margin-top: 4px; padding: 0; background: transparent; color: #1557c0; text-align: left; text-decoration: underline; }
     .course-progress { display: grid; gap: 10px; }
     .course-progress progress { width: 100%; height: 15px; accent-color: #1557c0; }
+    .admin-panel { border-color: #b9d1f6; }
+    .admin-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .admin-head h3 { margin: 0; }
+    .admin-filter { width: min(340px, 100%); padding: 9px 11px; border: 1px solid #bac9dc; border-radius: 9px; font: inherit; }
+    .admin-summary { margin: 0; color: #3b526d; }
+    .admin-table-wrap { overflow-x: auto; border: 1px solid #dce4f0; border-radius: 11px; }
+    .admin-table { width: 100%; min-width: 700px; border-collapse: collapse; font-size: 14px; }
+    .admin-table th, .admin-table td { padding: 11px 12px; border-bottom: 1px solid #e5ebf4; text-align: left; vertical-align: top; }
+    .admin-table th { background: #f3f6fb; color: #304866; white-space: nowrap; }
+    .admin-table tr:last-child td { border-bottom: 0; }
+    .admin-empty { padding: 18px; color: #5a6a7e; }
     [hidden] { display: none !important; }
     .lesson-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .lesson-link { display: block; min-height: 64px; padding: 9px; border-radius: 10px; background: rgba(255,255,255,.1); color: #fff; text-decoration: none; line-height: 1.35; }
@@ -106,6 +117,13 @@
         <p id="course-progress-text" class="note">登录或注册后，可在不同设备继续学习。</p>
         <progress id="course-progress" max="50" value="0"></progress>
         <div class="controls"><button id="complete-lesson" class="secondary" type="button">登录后记录本课</button></div>
+      </section>
+      <section id="admin-panel" class="panel admin-panel" hidden>
+        <div class="admin-head"><h3 id="admin-heading">管理员后台</h3><button id="admin-refresh" class="secondary" type="button">刷新数据</button></div>
+        <p id="admin-status" class="note">登录管理员账号后，可查看所有学习进度。</p>
+        <p id="admin-summary" class="admin-summary"></p>
+        <input id="admin-filter" class="admin-filter" type="search" placeholder="搜索用户名或邮箱" autocomplete="off">
+        <div id="admin-table-wrap" class="admin-table-wrap"></div>
       </section>
       <div class="nav-row">
         <button id="previous" class="secondary" type="button">← 上一课</button>
@@ -182,7 +200,7 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js';
     import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js';
-    import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js';
+    import { getFirestore, collection, doc, getDoc, getDocs, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js';
 
     const firebaseConfig = {
       apiKey: 'AIzaSyDz8dti_WZdyxuKw8aCC5WxgrSCnGnvDos',
@@ -195,6 +213,7 @@
     const firebaseApp = initializeApp(firebaseConfig);
     const auth = getAuth(firebaseApp);
     const db = getFirestore(firebaseApp);
+    const ADMIN_EMAIL = 'zhaiyi0113@gmail.com';
 
     const rows = `
 初次见面与做客::学会打招呼、介绍名字，并在朋友家做简单招待。::hola=你好;llamarse=叫做;cómo=怎样;el amigo / la amiga=朋友;la casa=家;el vino=葡萄酒;querer=想要;sí=是的;gracias=谢谢;venir=来
@@ -373,7 +392,7 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       return ['听影视或新闻时，先抓名词、动词和数字等关键词，再回到上下文猜整体意思。', '不认识的词先不要暂停：听完一句或一小段后，再判断它是否真的影响理解。'];
     }
 
-    const state = { lessonId: 1, lang: 'zh', rate: { examples: 1, dialogue: 1 }, dialogueStart: 0, run: 0, user: null, completedLessons: [], authMode: 'register' };
+    const state = { lessonId: 1, lang: 'zh', rate: { examples: 1, dialogue: 1 }, dialogueStart: 0, run: 0, user: null, completedLessons: [], authMode: 'register', adminUsers: [], adminFilter: '', adminLoading: false, adminError: '' };
     const isEnglish = () => state.lang === 'en';
     const meaningFor = word => isEnglish() ? word.en : word.zh;
     const translationFor = item => isEnglish() ? item.en : item.zh;
@@ -438,6 +457,12 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
     function accountName(user = state.user) {
       return user?.displayName || user?.email?.split('@')[0] || localized('学习者', 'Learner');
     }
+    function isAdmin() { return state.user?.email?.toLowerCase() === ADMIN_EMAIL; }
+    function escapeHtml(value) { return String(value ?? '').replace(/[&<>'"]/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[character])); }
+    function formatDate(timestamp) {
+      if (!timestamp?.toDate) return localized('暂无', '—');
+      return timestamp.toDate().toLocaleString(isEnglish() ? 'en-GB' : 'zh-CN');
+    }
     function renderAccount() {
       const signedIn = Boolean(state.user);
       $('#account-toggle').textContent = signedIn ? accountName() : localized('登录 / 注册', 'Sign in / Register');
@@ -462,6 +487,41 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
         ? localized('登录后记录本课', 'Sign in to record this lesson')
         : finished ? localized('取消完成标记', 'Remove completion mark') : localized('完成本课', 'Mark this lesson complete');
       $('#complete-lesson').className = signedIn && !finished ? 'primary' : 'secondary';
+    }
+    function renderAdmin() {
+      const allowed = isAdmin();
+      $('#admin-panel').hidden = !allowed;
+      if (!allowed) return;
+      $('#admin-heading').textContent = localized('管理员后台', 'Administrator dashboard');
+      $('#admin-refresh').textContent = localized('刷新数据', 'Refresh data');
+      $('#admin-filter').placeholder = localized('搜索用户名或邮箱', 'Search display name or email');
+      $('#admin-status').textContent = state.adminError || (state.adminLoading
+        ? localized('正在读取用户进度…', 'Loading user progress…')
+        : localized('仅管理员可查看此处数据；不包含密码。', 'Only the administrator can view this data; passwords are never included.'));
+      const keyword = state.adminFilter.trim().toLowerCase();
+      const users = state.adminUsers.filter(user => !keyword || `${user.displayName || ''} ${user.email || ''}`.toLowerCase().includes(keyword));
+      const totalCompleted = state.adminUsers.reduce((sum, user) => sum + (Array.isArray(user.completedLessons) ? user.completedLessons.length : 0), 0);
+      $('#admin-summary').textContent = localized(`共 ${state.adminUsers.length} 位用户，累计完成 ${totalCompleted} 次课程标记。`, `${state.adminUsers.length} users, ${totalCompleted} completed-lesson marks in total.`);
+      if (!users.length) {
+        $('#admin-table-wrap').innerHTML = `<div class="admin-empty">${state.adminLoading ? localized('正在加载…', 'Loading…') : localized('暂时没有匹配的用户数据。', 'No matching user records yet.')}</div>`;
+        return;
+      }
+      $('#admin-table-wrap').innerHTML = `<table class="admin-table"><thead><tr><th>${localized('用户名', 'Display name')}</th><th>${localized('邮箱', 'Email')}</th><th>${localized('完成课程', 'Completed')}</th><th>${localized('最近课程', 'Last lesson')}</th><th>${localized('最近同步', 'Last sync')}</th></tr></thead><tbody>${users.map(user => {
+        const completed = Array.isArray(user.completedLessons) ? user.completedLessons.length : 0;
+        return `<tr><td>${escapeHtml(user.displayName || localized('未设置', 'Not set'))}</td><td>${escapeHtml(user.email || localized('未同步', 'Not synced yet'))}</td><td>${completed} / ${lessons.length} (${Math.round(completed / lessons.length * 100)}%)</td><td>${user.lastLesson ? localized(`第 ${user.lastLesson} 课`, `Lesson ${user.lastLesson}`) : localized('暂无', '—')}</td><td>${escapeHtml(formatDate(user.updatedAt))}</td></tr>`;
+      }).join('')}</tbody></table>`;
+    }
+    async function loadAdminUsers() {
+      if (!isAdmin()) return;
+      state.adminLoading = true; state.adminError = ''; renderAdmin();
+      try {
+        const snapshot = await getDocs(collection(db, 'users'));
+        state.adminUsers = snapshot.docs.map(item => ({ uid: item.id, ...item.data() })).sort((a, b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
+      } catch (error) {
+        state.adminError = localized('无法读取用户列表，请确认管理员账号与网络连接。', 'Could not read the user list. Check the administrator account and network connection.');
+      } finally {
+        state.adminLoading = false; renderAdmin();
+      }
     }
     function updateAuthForm() {
       const registering = state.authMode === 'register';
@@ -500,7 +560,7 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       if (!state.user) return;
       const completedLessons = [...new Set(state.completedLessons)].filter(id => Number.isInteger(id) && id >= 1 && id <= lessons.length).sort((a, b) => a - b);
       state.completedLessons = completedLessons;
-      const data = { displayName: accountName(), lastLesson: state.lessonId, completedLessons, updatedAt: serverTimestamp() };
+      const data = { displayName: accountName(), email: state.user.email || '', lastLesson: state.lessonId, completedLessons, updatedAt: serverTimestamp() };
       if (includeCreatedAt) data.createdAt = serverTimestamp();
       await setDoc(doc(db, 'users', state.user.uid), data, { merge: true });
     }
@@ -514,6 +574,7 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
           localStorage.setItem('spanish-course-lesson', state.lessonId);
           history.replaceState(null, '', `#leccion-${state.lessonId}`);
         }
+        if (!saved.email && user.email) void saveProgress();
       } catch (error) {
         $('#course-progress-text').textContent = localized('进度暂时无法同步，请稍后再试。', 'Progress cannot sync right now. Please try again later.');
       }
@@ -556,7 +617,7 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       document.querySelectorAll('.stop-all').forEach(button => button.textContent = l.stop);
       document.querySelectorAll('.speed-controls span').forEach(span => span.textContent = l.speed);
       $('#previous').textContent = $('#previous-bottom').textContent = l.previous; $('#next').textContent = $('#next-bottom').textContent = l.next;
-      renderAccount(); renderProgress(); updateAuthForm();
+      renderAccount(); renderProgress(); renderAdmin(); updateAuthForm();
     }
     function renderNav() {
       const l = labels[state.lang];
@@ -614,6 +675,8 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
     $('#auth-modal').addEventListener('click', event => { if (event.target === $('#auth-modal')) closeAuthModal(); });
     $('#auth-switch').addEventListener('click', () => { state.authMode = state.authMode === 'register' ? 'login' : 'register'; $('#auth-status').textContent = ''; updateAuthForm(); });
     $('#auth-form').addEventListener('submit', handleAuthSubmit);
+    $('#admin-refresh').addEventListener('click', () => { void loadAdminUsers(); });
+    $('#admin-filter').addEventListener('input', event => { state.adminFilter = event.target.value; renderAdmin(); });
     $('#complete-lesson').addEventListener('click', async () => {
       if (!state.user) return openAuthModal('register');
       const lessonId = state.lessonId;
@@ -626,8 +689,8 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
     });
     onAuthStateChanged(auth, user => {
       state.user = user;
-      if (user) { void loadProgress(user); }
-      else { state.completedLessons = []; $('#account-panel').hidden = true; renderAccount(); renderProgress(); }
+      if (user) { void loadProgress(user); if (isAdmin()) void loadAdminUsers(); }
+      else { state.completedLessons = []; state.adminUsers = []; state.adminFilter = ''; $('#account-panel').hidden = true; renderAccount(); renderProgress(); renderAdmin(); }
     });
     const hashId = Number(location.hash.replace('#leccion-', '')); const savedId = Number(localStorage.getItem('spanish-course-lesson')); const savedLanguage = localStorage.getItem('spanish-course-language');
     state.lang = savedLanguage === 'en' ? 'en' : 'zh';

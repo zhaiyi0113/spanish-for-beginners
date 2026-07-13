@@ -719,14 +719,30 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       const preferred = role === 'B' ? maleVoiceNames : femaleVoiceNames;
       return spanishVoices.find(voice => preferred.some(name => voice.name.toLowerCase().includes(name))) || null;
     }
-    async function waitForVoice(role) {
-      for (let attempt = 0; attempt < 8; attempt += 1) {
-        loadVoices();
-        const voice = voiceFor(role);
-        if (voice) return voice;
-        await pause(100);
-      }
-      return null;
+    function waitForVoice(role) {
+      return new Promise(resolve => {
+        let settled = false;
+        const finish = voice => {
+          if (settled) return;
+          settled = true;
+          speechSynthesis.removeEventListener('voiceschanged', refresh);
+          clearTimeout(timeout);
+          resolve(voice);
+        };
+        const refresh = () => {
+          loadVoices();
+          const preferredVoice = voiceFor(role);
+          if (preferredVoice) finish(preferredVoice);
+        };
+        const timeout = setTimeout(() => {
+          loadVoices();
+          // A browser can delay exposing its Windows voices. If it still does not
+          // expose a named female voice, keep audio working with its Spanish default.
+          finish(voiceFor(role) || spanishVoices[0] || null);
+        }, 1500);
+        speechSynthesis.addEventListener('voiceschanged', refresh);
+        refresh();
+      });
     }
     async function speak(text, { rate = 1, role = 'A' } = {}) {
       stopAll();

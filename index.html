@@ -169,9 +169,9 @@
       <h3 id="auth-heading">创建学习账号</h3>
       <p id="auth-hint">使用用户名、邮箱和密码创建账号；密码由 Firebase 安全管理。</p>
       <form id="auth-form" class="auth-form">
-        <label id="auth-name-row">用户名<input id="auth-name" type="text" autocomplete="nickname" minlength="2" maxlength="40" required></label>
-        <label>邮箱<input id="auth-email" type="email" autocomplete="email" required></label>
-        <label>密码<input id="auth-password" type="password" autocomplete="new-password" minlength="6" required></label>
+        <label id="auth-name-row"><span id="auth-name-label">用户名</span><input id="auth-name" type="text" autocomplete="nickname" minlength="2" maxlength="40" required></label>
+        <label><span id="auth-email-label">邮箱</span><input id="auth-email" type="email" autocomplete="email" required></label>
+        <label><span id="auth-password-label">密码</span><input id="auth-password" type="password" autocomplete="new-password" minlength="6" required></label>
         <p id="auth-status" class="auth-status" aria-live="polite"></p>
         <button id="auth-submit" class="primary" type="submit">创建账号</button>
         <button id="auth-switch" class="auth-switch" type="button">已有账号？登录</button>
@@ -471,6 +471,9 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
         : localized('使用注册时的邮箱和密码登录。', 'Use the email address and password you registered with.');
       $('#auth-name-row').hidden = !registering;
       $('#auth-name').required = registering;
+      $('#auth-name-label').textContent = localized('用户名', 'Display name');
+      $('#auth-email-label').textContent = localized('邮箱', 'Email address');
+      $('#auth-password-label').textContent = localized('密码', 'Password');
       $('#auth-password').autocomplete = registering ? 'new-password' : 'current-password';
       $('#auth-submit').textContent = registering ? localized('创建账号', 'Create account') : localized('登录', 'Sign in');
       $('#auth-switch').textContent = registering ? localized('已有账号？登录', 'Already have an account? Sign in') : localized('没有账号？创建一个', 'No account yet? Create one');

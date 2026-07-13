@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>西班牙语 50 课｜从零基础到看懂内容</title>
+  <style>
+    :root { color: #1f2937; background: #f7f9fc; font-family: system-ui, "Microsoft YaHei", sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    button, a { font: inherit; }
+    button { border: 0; border-radius: 9px; padding: 8px 12px; cursor: pointer; }
+    .primary { background: #1557c0; color: #fff; }
+    .secondary { background: #e1e9f7; color: #173b6c; }
+    .small { padding: 5px 9px; font-size: 14px; }
+    .shell { display: grid; grid-template-columns: 290px minmax(0, 1fr); min-height: 100vh; }
+    .sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; padding: 24px 16px; background: #12315f; color: #fff; }
+    .sidebar h1 { margin: 0 0 10px; font-size: 23px; }
+    .sidebar p { margin: 0 0 18px; color: #d8e6ff; font-size: 14px; line-height: 1.6; }
+    .lesson-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .lesson-link { display: block; min-height: 64px; padding: 9px; border-radius: 10px; background: rgba(255,255,255,.1); color: #fff; text-decoration: none; line-height: 1.35; }
+    .lesson-link:hover, .lesson-link.active { background: #fff; color: #12315f; }
+    .lesson-number { display: block; font-weight: 800; font-size: 13px; }
+    .lesson-name { display: block; margin-top: 3px; font-size: 12px; }
+    main { width: min(1180px, 100%); margin: 0 auto; padding: 42px 34px 60px; }
+    .eyebrow { margin: 0; color: #1557c0; font-weight: 800; letter-spacing: .08em; }
+    h2 { margin: 6px 0 10px; font-size: clamp(28px, 4vw, 42px); line-height: 1.2; }
+    .goal { margin: 0; color: #526174; }
+    .nav-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 24px 0; }
+    .panel { margin: 24px 0; padding: 22px; border: 1px solid #dae2ef; border-radius: 16px; background: #fff; box-shadow: 0 6px 20px rgba(29, 55, 95, .06); }
+    .panel h3 { margin: 0 0 10px; font-size: 22px; }
+    .reader { min-height: 52px; color: #1557c0; font-weight: 800; font-size: 25px; }
+    .status { min-height: 25px; color: #596a80; }
+    .controls, .speed-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
+    .speed-controls span { color: #596a80; font-size: 14px; }
+    .speed.active { background: #1557c0; color: #fff; }
+    .word-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .word-card { padding: 17px; border: 1px solid #dce4f0; border-radius: 14px; background: #fff; }
+    .word-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+    .word { color: #1557c0; font-weight: 800; font-size: 22px; line-height: 1.2; }
+    .translation { margin: 6px 0; font-size: 17px; }
+    .meta { margin: 5px 0; color: #58697d; font-size: 14px; }
+    .meta strong { color: #26384f; }
+    .forms { margin-top: 9px; padding-top: 9px; border-top: 1px dashed #dce4f0; font-size: 14px; }
+    .examples, .dialogue { display: grid; gap: 12px; }
+    .example, .line { padding: 14px 16px; border-radius: 12px; background: #f4f7fc; }
+    .spanish { font-weight: 750; font-size: 17px; }
+    .chinese { margin-top: 5px; color: #5a6a7e; }
+    .line .speaker { display: inline-block; width: 28px; color: #1557c0; font-weight: 800; }
+    .line button, .example button { margin-left: 10px; vertical-align: middle; }
+    .progress { width: 100%; accent-color: #1557c0; }
+    .grammar { margin: 0; padding-left: 22px; line-height: 1.8; }
+    .note { color: #5a6a7e; font-size: 14px; }
+    .footer-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 34px; }
+    @media (max-width: 860px) {
+      .shell { display: block; }
+      .sidebar { position: static; height: auto; }
+      .lesson-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+      .lesson-link { min-height: 48px; padding: 6px; }
+      .lesson-name { display: none; }
+      main { padding: 28px 16px 46px; }
+      .word-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <h1>西班牙语 50 课</h1>
+      <p>每天 10 个重点词。前 30 课建立日常交流能力，后 20 课练电视剧、电影、播客与新闻理解。</p>
+      <nav id="lesson-nav" class="lesson-grid" aria-label="选择课程"></nav>
+    </aside>
+    <main>
+      <p class="eyebrow" id="lesson-number"></p>
+      <h2 id="lesson-title"></h2>
+      <p id="lesson-goal" class="goal"></p>
+      <div class="nav-row">
+        <button id="previous" class="secondary" type="button">← 上一课</button>
+        <button id="next" class="primary" type="button">下一课 →</button>
+      </div>
+
+      <section class="panel">
+        <h3>单词跟读</h3>
+        <div id="term-current" class="reader">准备开始</div>
+        <div id="term-status" class="status">选择每词朗读次数；每一次结束后停顿 1 秒。</div>
+        <div class="controls">
+          <button class="primary term-mode" data-times="3" type="button">每词读 3 遍</button>
+          <button class="secondary term-mode" data-times="1" type="button">每词读 1 遍</button>
+          <button class="secondary stop-all" type="button">停止</button>
+        </div>
+      </section>
+
+      <section>
+        <h3>10 个单词卡</h3>
+        <p class="note">点“播放”可单独听词。名词会保留冠词；动词卡会显示本课常用形式。</p>
+        <div id="word-grid" class="word-grid"></div>
+      </section>
+
+      <section class="panel">
+        <h3>5 个例句</h3>
+        <div id="example-current" class="reader">准备听例句</div>
+        <div id="example-status" class="status"></div>
+        <div class="controls">
+          <button id="play-examples" class="primary" type="button">播放全部例句</button>
+          <button class="secondary stop-all" type="button">停止</button>
+        </div>
+        <div class="speed-controls" data-target="examples"><span>速度：</span><button class="secondary small speed" data-rate="0.5" type="button">0.5×</button><button class="secondary small speed" data-rate="0.8" type="button">0.8×</button><button class="secondary small speed active" data-rate="1" type="button">1×</button></div>
+      </section>
+      <div id="examples" class="examples"></div>
+
+      <section class="panel">
+        <h3>微型对话</h3>
+        <div id="dialogue-current" class="reader">准备听 A 和 B 的对话</div>
+        <div id="dialogue-status" class="status">整段对话朗读 1 遍。</div>
+        <input id="dialogue-progress" class="progress" type="range" min="0" max="5" value="0" step="1" aria-label="对话播放进度">
+        <div id="dialogue-position" class="note">从第 1 / 5 句开始播放</div>
+        <div class="controls">
+          <button id="play-dialogue" class="primary" type="button">播放对话</button>
+          <button class="secondary stop-all" type="button">停止</button>
+        </div>
+        <div class="speed-controls" data-target="dialogue"><span>速度：</span><button class="secondary small speed" data-rate="0.5" type="button">0.5×</button><button class="secondary small speed" data-rate="0.8" type="button">0.8×</button><button class="secondary small speed active" data-rate="1" type="button">1×</button></div>
+      </section>
+      <div id="dialogue" class="dialogue"></div>
+
+      <section class="panel">
+        <h3>今日语法</h3>
+        <ol id="grammar" class="grammar"></ol>
+      </section>
+      <div class="footer-nav"><button id="previous-bottom" class="secondary" type="button">← 上一课</button><button id="next-bottom" class="primary" type="button">下一课 →</button></div>
+    </main>
+  </div>
+
+  <script>
+    const rows = `
+初次见面与做客::学会打招呼、介绍名字，并在朋友家做简单招待。::hola=你好;llamarse=叫做;cómo=怎样;el amigo / la amiga=朋友;la casa=家;el vino=葡萄酒;querer=想要;sí=是的;gracias=谢谢;venir=来
+身份、国籍与城市::介绍自己来自哪里、住在哪里。::ser=是;de=来自;español / española=西班牙人;chino / china=中国人;la nacionalidad=国籍;vivir=居住;la ciudad=城市;aquí=这里;allí=那里;conocer=认识
+家人与关系::谈论你的家人和亲近的人。::la familia=家庭;la madre=母亲;el padre=父亲;el hermano=兄弟;la hermana=姐妹;el hijo=儿子;la hija=女儿;la pareja=伴侣;casado / casada=已婚;soltero / soltera=单身
+数字、年龄与联系方式::询问年龄、电话和地址。::cero=零;diez=十;veinte=二十;el número=号码;el año=年;la edad=年龄;el teléfono=电话;el correo=邮箱;la dirección=地址;el código=代码
+时间与日期::说今天、明天以及一周中的日期。::hoy=今天;mañana=明天;ayer=昨天;ahora=现在;la mañana=早晨;la tarde=下午;la noche=夜晚;la semana=星期;el lunes=星期一;el fin de semana=周末
+日常作息::描述从起床到睡觉的一天。::despertarse=醒来;levantarse=起床;ducharse=洗澡;desayunar=吃早餐;trabajar=工作;comer=吃饭;volver=返回;descansar=休息;acostarse=上床;dormir=睡觉
+工作与学习::聊工作、课程和学习任务。::el trabajo=工作;la oficina=办公室;la reunión=会议;la tarea=任务;el proyecto=项目;estudiar=学习;la clase=课;el profesor=老师;el compañero=同事/同学;aprender=学习到
+城市里的地点::认识城市中常去的地方。::la calle=街道;la plaza=广场;el barrio=街区;el centro=市中心;el parque=公园;la tienda=商店;el banco=银行;la estación=车站;el museo=博物馆;la farmacia=药店
+问路与方向::能听懂并给出简单方向。::la derecha=右边;la izquierda=左边;todo recto=一直往前;cerca=近;lejos=远;girar=转弯;cruzar=穿过;seguir=继续;el mapa=地图;la esquina=街角
+购物与价格::询问价格、付款和找零。::cuánto=多少;el precio=价格;barato / barata=便宜;caro / cara=贵;comprar=买;pagar=付款;el efectivo=现金;la tarjeta=卡;el descuento=折扣;el cambio=找零
+衣服与颜色::买衣服时描述颜色和尺寸。::la camisa=衬衫;el pantalón=裤子;el vestido=连衣裙;los zapatos=鞋;rojo / roja=红色;azul=蓝色;negro / negra=黑色;blanco / blanca=白色;la talla=尺码;probarse=试穿
+家与房间::描述房间、家具和家的位置。::el piso=公寓;la habitación=房间;la cocina=厨房;el baño=浴室;el salón=客厅;la mesa=桌子;la silla=椅子;la cama=床;la ventana=窗户;la puerta=门
+超市与食材::购买日常食材。::el pan=面包;la leche=牛奶;el agua=水;la fruta=水果;la verdura=蔬菜;el arroz=米饭;el pollo=鸡肉;el queso=奶酪;la botella=瓶;necesitar=需要
+咖啡馆点单::在咖啡馆点饮料和小食。::un café=咖啡;un té=茶;el zumo=果汁;con leche=加牛奶;sin azúcar=不加糖;por favor=请;para llevar=带走;la cuenta=账单;tomar=喝/吃;servir=提供
+餐馆用餐::点菜、表达口味和结账。::el menú=菜单;el plato=菜;la sopa=汤;la ensalada=沙拉;delicioso / deliciosa=好吃;tener hambre=饿;recomendar=推荐;pedir=点餐;compartir=分享;la propina=小费
+兴趣与休闲::聊爱好和周末活动。::gustar=喜欢;leer=阅读;dibujar=画画;el deporte=运动;caminar=散步;cocinar=做饭;viajar=旅行;la música=音乐;el libro=书;la película=电影
+约时间与计划::约朋友见面并确认安排。::quedar=约见;el plan=计划;libre=有空;ocupado / ocupada=忙;esta tarde=今天下午;a las ocho=八点钟;primero=首先;después=之后;confirmar=确认;cancelar=取消
+天气与季节::说天气、温度和季节。::hace sol=晴天;llover=下雨;hacer frío=冷;hacer calor=热;el viento=风;la nube=云;la primavera=春天;el verano=夏天;el otoño=秋天;el invierno=冬天
+身体与感受::描述身体部位和当下感受。::la cabeza=头;el ojo=眼;la mano=手;el estómago=胃;cansado / cansada=累;contento / contenta=开心;preocupado / preocupada=担心;sentirse=感觉;mejor=更好;mal=不好
+药店与看医生::说明常见不适并获得帮助。::el médico=医生;la medicina=药;la receta=处方;la fiebre=发烧;el dolor=疼痛;tener tos=咳嗽;la cita=预约;urgente=紧急;me duele=我疼;curarse=康复
+车站与交通::买票、找站台、确认班次。::el tren=火车;el autobús=公交车;el metro=地铁;el billete=票;la parada=站点;el andén=站台;salir=出发;llegar=到达;el horario=时刻表;el retraso=延误
+机场与登机::办理值机、过安检和登机。::el aeropuerto=机场;el vuelo=航班;la maleta=行李箱;el pasaporte=护照;la puerta de embarque=登机口;facturar=托运;el control=安检;el asiento=座位;embarcar=登机;aterrizar=降落
+酒店入住::预订房间、办理入住和提出请求。::el hotel=酒店;la reserva=预订;la recepción=前台;la llave=钥匙;la noche=夜晚;una habitación doble=双人间;incluir=包含;el desayuno=早餐;la contraseña=密码;salir tarde=晚退房
+旅行与景点::参观景点并表达旅行感受。::el viaje=旅行;el turista=游客;la entrada=门票;la visita=参观;la vista=景色;bonito / bonita=漂亮;famoso / famosa=有名;hacer fotos=拍照;perderse=迷路;disfrutar=享受
+本周发生了什么::开始用过去时讲近期事件。::pasar=发生;ayer por la tarde=昨天下午;anoche=昨晚;fui=我去了;vi=我看见/看了;hice=我做了;tuve=我有/经历了;dije=我说了;empezar=开始;terminar=结束
+昨天的活动::叙述昨天做了哪些事。::desperté=我醒来;fui a=我去了;comí=我吃了;hablé=我交谈了;compré=我买了;volví=我回来了;vi a=我见了;estuve=我在;llamé=我打电话;descansé=我休息了
+过去的小故事::把事件按顺序说出来。::de repente=突然;entonces=于是;primero=首先;luego=然后;al final=最后;encontrar=找到;perder=丢失;decidir=决定;ocurrir=发生;contar=讲述
+描述人物与场景::用过去背景描述让故事更生动。::antes=以前;cuando era niño / niña=小时候;siempre=总是;a menudo=经常;la gente=人们;parecer=看起来;llevar=穿着;haber=有;estar=处于;recordar=记得
+比较与偏好::比较两件事并说明偏好。::más=更;menos=更少;mejor=更好;peor=更差;que=比;preferir=更喜欢;igual=一样;diferente=不同;tan=这么;como=像
+计划、愿望与未来::表达想做的事和近期计划。::voy a=我要;quiero=我想;espero=我希望;quizá=也许;pronto=很快;el próximo=下一个;viaje=旅行;intentar=尝试;lograr=实现;soñar=梦想
+电话与消息::打电话、发消息和回复。::llamar=打电话;el mensaje=消息;responder=回复;dejar un mensaje=留言;el móvil=手机;sonar=响;conectado / conectada=在线;enviar=发送;recibir=收到;avisar=通知
+网络与社交媒体::理解日常网络交流。::la red=网络;la aplicación=应用;la cuenta=账号;publicar=发布;seguir=关注;compartir=分享;comentar=评论;el enlace=链接;la noticia=新闻;viral=爆红
+意见与同意::表达观点、赞同或保留。::creer=认为;opinar=发表看法;estar de acuerdo=同意;claro=当然;quizá=也许;depender=取决于;importante=重要;la razón=理由;explicar=解释;respetar=尊重
+解决问题::提出问题、描述情况、寻找办法。::el problema=问题;la solución=解决办法;funcionar=起作用;arreglar=修理;probar=尝试;necesitar ayuda=需要帮助;por eso=因此;sin embargo=但是;resolver=解决;tranquilo / tranquila=别急
+家庭聚会::在聚会中聊天、招待和告别。::la fiesta=聚会;invitar=邀请;traer=带来;celebrar=庆祝;felicidades=祝贺;conocer gente=认识人;brindar=举杯;quedarse=留下;irse=离开;encantado / encantada=很高兴认识你
+工作沟通::处理工作中的任务与反馈。::el informe=报告;el plazo=截止时间;entregar=提交;revisar=检查;la prioridad=优先级;el equipo=团队;proponer=提出;la mejora=改进;reunirse=开会;actualizar=更新
+学校与课程::谈课程内容、作业和考试。::el examen=考试;la pregunta=问题;la respuesta=答案;la nota=成绩;repasar=复习;practicar=练习;entender=理解;explicar=解释;aprobar=通过;mejorar=提高
+看电视剧::听懂人物、情节和下一集。::la serie=电视剧;el episodio=一集;el personaje=角色;la trama=情节;la escena=场景;ocultar=隐瞒;descubrir=发现;el secreto=秘密;el final=结局;continuar=继续
+电影与故事::描述电影类型和故事发展。::la película=电影;el director=导演;el actor=演员;la actriz=女演员;la historia=故事;emocionante=激动人心;aburrido / aburrida=无聊;el comienzo=开头;el conflicto=冲突;recomendar=推荐
+音乐与播客::从慢速音频中抓住主题。::la canción=歌曲;la letra=歌词;el podcast=播客;la voz=声音;escuchar=听;repetir=重复;la entrevista=采访;el tema=主题;la idea=想法;comprender=理解
+新闻标题::认识新闻中最常见的标题词。::la noticia=新闻;el titular=标题;anunciar=宣布;ocurrir=发生;el gobierno=政府;el país=国家;la ciudad=城市;el aumento=增长;la caída=下降;según=根据
+天气新闻::听懂天气预报中的关键信息。::el pronóstico=预报;la temperatura=温度;la tormenta=暴风雨;la lluvia=雨;la nieve=雪;el riesgo=风险;afectar=影响;continuar=持续;mejorar=好转;prever=预计
+社会与公共服务::理解身边的公共议题。::el servicio=服务;el transporte público=公共交通;la vivienda=住房;la seguridad=安全;el barrio=社区;mejorar=改善;ofrecer=提供;la medida=措施;la comunidad=社区;participar=参与
+科技与产品::聊设备、更新和使用体验。::la tecnología=科技;el dispositivo=设备;la pantalla=屏幕;la batería=电池;actualizar=更新;descargar=下载;la función=功能;rápido / rápida=快速;fallar=出故障;recomendar=推荐
+经济与工作新闻::认识工作和经济新闻高频词。::la empresa=公司;el empleo=就业;el salario=工资;el mercado=市场;crecer=增长;reducir=减少;invertir=投资;el dato=数据;el sector=行业;la cifra=数字
+体育新闻::听懂比赛结果和基本评论。::el partido=比赛;el equipo=队伍;ganar=赢;perder=输;el jugador=球员;el gol=进球;el resultado=结果;la competición=赛事;destacar=表现突出;celebrar=庆祝
+观点与评论::理解评论中的立场和理由。::el comentario=评论;la crítica=批评;la opinión=意见;apoyar=支持;rechazar=反对;parecer=看起来;argumentar=论证;la evidencia=证据;el ejemplo=例子;concluir=得出结论
+文化与旅行节目::听文化节目并提取重要细节。::la cultura=文化;la tradición=传统;la costumbre=习俗;la región=地区;el idioma=语言;la experiencia=体验;visitar=参观;descubrir=发现;local=当地的;recomendar=推荐
+复述一个片段::把听到的片段按顺序复述。::resumir=总结;al principio=起初;después=随后;mencionar=提到;explicar=解释;el detalle=细节;la causa=原因;la consecuencia=结果;finalmente=最后;en otras palabras=换句话说
+真实内容综合练习::综合使用日常交流、影视和新闻理解策略。::entender=理解;la palabra clave=关键词;el contexto=语境;repetir=重复;pausar=暂停;anotar=记下;buscar=查找;adivinar=猜测;practicar=练习;progresar=进步
+`.trim();
+
+    const lessons = rows.split('\n').map((row, index) => {
+      const [title, goal, words] = row.split('::');
+      return { id: index + 1, title, goal, words: words.split(';').map(item => {
+        const [word, zh] = item.split('=');
+        return { word, zh, pos: inferPos(word), note: inferNote(word), forms: inferForms(word) };
+      }) };
+    });
+
+    function inferPos(word) {
+      if (/^(el |la |los |las |un |una )/.test(word)) return '名词';
+      if (/(ar|er|ir|arse|erse|irse)$/.test(word) || /^(ser|estar|haber|ir|fui|vi|hice|tuve|dije|fui a|me duele)$/.test(word)) return '动词';
+      if (/\/$/.test(word)) return '表达';
+      return '词汇 / 表达';
+    }
+    function inferNote(word) {
+      if (/^el /.test(word)) return '和 el 一起记，通常为阳性名词。';
+      if (/^la /.test(word)) return '和 la 一起记，通常为阴性名词。';
+      if (/(ar|er|ir|arse|erse|irse)$/.test(word)) return '先听原形，再在例句和对话中注意它的变化。';
+      return '结合例句和对话一起记忆。';
+    }
+    function inferForms(word) {
+      const forms = { ser:['soy＝我是','eres＝你是'], vivir:['vivo＝我住','vives＝你住'], querer:['quiero＝我想要','quieres＝你想要'], venir:['vengo＝我来','viene＝他／她来'], gustar:['me gusta＝我喜欢','te gusta＝你喜欢'], poder:['puedo＝我能','puedes＝你能'], tener:['tengo＝我有','tienes＝你有'], ir:['voy＝我去','vas＝你去'], hablar:['hablo＝我说','hablas＝你说'], trabajar:['trabajo＝我工作','trabajas＝你工作'] };
+      return forms[word] || [];
+    }
+    function pairExamples(lesson) {
+      return Array.from({ length: 5 }, (_, i) => {
+        const first = lesson.words[i * 2], second = lesson.words[i * 2 + 1];
+        return { es: `Hoy practicamos «${first.word}» y «${second.word}».`, zh: `今天练习“${first.zh}”和“${second.zh}”。` };
+      });
+    }
+    function makeDialogue(lesson) {
+      const w = lesson.words;
+      return [
+        ['A', `¿Practicamos «${w[0].word}» y «${w[1].word}»?`, `我们练习“${w[0].zh}”和“${w[1].zh}”吗？`],
+        ['B', `Sí. También usamos «${w[2].word}» y «${w[3].word}».`, `好。我们也会用到“${w[2].zh}”和“${w[3].zh}”。`],
+        ['A', `Para este tema necesito «${w[4].word}» y «${w[5].word}».`, `这个主题里，我需要“${w[4].zh}”和“${w[5].zh}”。`],
+        ['B', `Perfecto: añadimos «${w[6].word}», «${w[7].word}» y «${w[8].word}».`, `好：再加上“${w[6].zh}”“${w[7].zh}”和“${w[8].zh}”。`],
+        ['A', `Y terminamos con «${w[9].word}».`, `最后是“${w[9].zh}”。`]
+      ];
+    }
+    function grammarFor(lesson) {
+      if (lesson.id <= 10) return ['名词尽量连同冠词记忆：<strong>el</strong> 常见于阳性名词，<strong>la</strong> 常见于阴性名词。', '先掌握高频小组合，而不是孤立背词：例如 <strong>me llamo</strong>、<strong>¿cuánto cuesta?</strong>。'];
+      if (lesson.id <= 24) return ['表达请求时，先记完整的礼貌句：<strong>Quiero…</strong>、<strong>¿Puede…?</strong>、<strong>Por favor.</strong>', '遇到动词变化，先能听出常用形式即可；不要急着背完整张变位表。'];
+      if (lesson.id <= 37) return ['讲过去的具体事件，优先留意动词过去式；先抓“谁、何时、做了什么”。', '连接词能让表达更连贯：<strong>primero</strong>、<strong>luego</strong>、<strong>al final</strong>。'];
+      return ['听影视或新闻时，先抓名词、动词和数字等关键词，再回到上下文猜整体意思。', '不认识的词先不要暂停：听完一句或一小段后，再判断它是否真的影响理解。'];
+    }
+
+    const state = { lessonId: 1, rate: { examples: 1, dialogue: 1 }, dialogueStart: 0, run: 0 };
+    let spanishVoices = [];
+    function loadVoices() { spanishVoices = speechSynthesis.getVoices().filter(v => v.lang.toLowerCase().startsWith('es')); }
+    loadVoices(); speechSynthesis.addEventListener('voiceschanged', loadVoices);
+    const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+    function stopAll() { state.run += 1; speechSynthesis.cancel(); }
+    function voiceFor(role) {
+      const preferred = role === 'B' ? ['Pablo', 'Raul'] : ['Laura', 'Helena', 'Sabina'];
+      return preferred.map(name => spanishVoices.find(v => v.name.includes(name))).find(Boolean) || spanishVoices[0];
+    }
+    function speak(text, { rate = 1, role = 'A' } = {}) {
+      stopAll();
+      const myRun = state.run;
+      return new Promise(resolve => {
+        const utterance = new SpeechSynthesisUtterance(text.replace(/[«»]/g, ''));
+        utterance.lang = 'es-ES'; utterance.rate = rate; utterance.voice = voiceFor(role) || null;
+        utterance.onend = () => resolve(myRun === state.run);
+        utterance.onerror = () => resolve(false);
+        speechSynthesis.speak(utterance);
+      });
+    }
+    async function speakSequence(items, options, onEach, gap = 1000) {
+      stopAll(); const myRun = state.run;
+      for (let i = 0; i < items.length; i++) {
+        if (myRun !== state.run) return false;
+        onEach?.(items[i], i);
+        const utterance = new SpeechSynthesisUtterance(items[i].text || items[i]);
+        utterance.lang = 'es-ES'; utterance.rate = options.rate || 1; utterance.voice = voiceFor(items[i].role || options.role || 'A') || null;
+        const played = await new Promise(resolve => { utterance.onend = () => resolve(true); utterance.onerror = () => resolve(false); speechSynthesis.speak(utterance); });
+        if (!played || myRun !== state.run) return false;
+        if (gap && (i < items.length - 1 || options.pauseAfterLast)) await pause(gap);
+      }
+      return myRun === state.run;
+    }
+
+    const $ = selector => document.querySelector(selector);
+    function currentLesson() { return lessons[state.lessonId - 1]; }
+    function renderNav() {
+      $('#lesson-nav').innerHTML = lessons.map(l => `<a class="lesson-link ${l.id === state.lessonId ? 'active' : ''}" href="#leccion-${l.id}" data-lesson="${l.id}"><span class="lesson-number">第 ${l.id} 课</span><span class="lesson-name">${l.title}</span></a>`).join('');
+    }
+    function render() {
+      stopAll(); state.dialogueStart = 0;
+      const lesson = currentLesson(); const examples = pairExamples(lesson); const dialogue = makeDialogue(lesson);
+      $('#lesson-number').textContent = `LECCIÓN ${String(lesson.id).padStart(2, '0')} · 每日 10 词`;
+      $('#lesson-title').textContent = lesson.title;
+      $('#lesson-goal').textContent = lesson.goal;
+      $('#term-current').textContent = '准备开始'; $('#term-status').textContent = '选择每词朗读次数；每一次结束后停顿 1 秒。';
+      $('#example-current').textContent = '准备听例句'; $('#example-status').textContent = '5 个例句，每句朗读 1 遍。';
+      $('#dialogue-current').textContent = '准备听 A 和 B 的对话'; $('#dialogue-status').textContent = '整段对话朗读 1 遍。';
+      $('#dialogue-progress').value = 0; $('#dialogue-position').textContent = '从第 1 / 5 句开始播放';
+      $('#word-grid').innerHTML = lesson.words.map((w, index) => `<article class="word-card"><div class="word-top"><div><div class="word">${w.word}</div><div class="translation">${w.zh}</div></div><button class="secondary small word-play" data-index="${index}" type="button">播放</button></div><div class="meta"><strong>词性：</strong>${w.pos}</div><div class="meta"><strong>提示：</strong>${w.note}</div>${w.forms.length ? `<div class="forms"><strong>常用形式：</strong>${w.forms.map(f => `<button class="secondary small form-play" data-form="${f.split('＝')[0]}" type="button">${f}</button>`).join(' ')}</div>` : ''}</article>`).join('');
+      $('#examples').innerHTML = examples.map((e, index) => `<article class="example"><span class="spanish">${e.es}</span><button class="secondary small example-play" data-index="${index}" type="button">播放这句</button><div class="chinese">${e.zh}</div></article>`).join('');
+      $('#dialogue').innerHTML = dialogue.map((line, index) => `<article class="line"><span class="speaker">${line[0]}</span><span class="spanish">${line[1]}</span><button class="secondary small dialogue-play" data-index="${index}" type="button">播放这句</button><div class="chinese">${line[2]}</div></article>`).join('');
+      $('#grammar').innerHTML = grammarFor(lesson).map(g => `<li>${g}</li>`).join('');
+      renderNav(); bindLessonContent();
+      $('#previous').disabled = $('#previous-bottom').disabled = lesson.id === 1;
+      $('#next').disabled = $('#next-bottom').disabled = lesson.id === lessons.length;
+    }
+    function bindLessonContent() {
+      const lesson = currentLesson(), examples = pairExamples(lesson), dialogue = makeDialogue(lesson);
+      document.querySelectorAll('.word-play').forEach(button => button.addEventListener('click', async () => { const w = lesson.words[Number(button.dataset.index)]; $('#term-current').textContent = `${w.word} · ${w.zh}`; $('#term-status').textContent = '本词朗读 1 遍。'; await speak(w.word); }));
+      document.querySelectorAll('.form-play').forEach(button => button.addEventListener('click', async () => { $('#term-current').textContent = button.dataset.form; $('#term-status').textContent = '这个动词形式朗读 1 遍。'; await speak(button.dataset.form); }));
+      document.querySelectorAll('.example-play').forEach(button => button.addEventListener('click', async () => { const e = examples[Number(button.dataset.index)]; $('#example-current').textContent = e.es; $('#example-status').textContent = '本句朗读 1 遍。'; await speak(e.es, { rate: state.rate.examples }); }));
+      document.querySelectorAll('.dialogue-play').forEach(button => button.addEventListener('click', async () => { const l = dialogue[Number(button.dataset.index)]; $('#dialogue-current').textContent = `${l[0]}：${l[1]}`; $('#dialogue-status').textContent = '本句朗读 1 遍。'; await speak(l[1], { rate: state.rate.dialogue, role: l[0] }); }));
+    }
+    document.querySelectorAll('.term-mode').forEach(button => button.addEventListener('click', async () => {
+      const times = Number(button.dataset.times), lesson = currentLesson();
+      const items = lesson.words.flatMap(w => Array.from({ length: times }, () => ({ text: w.word, word: w })));
+      const completed = await speakSequence(items, { pauseAfterLast: true }, (item, index) => { $('#term-current').textContent = `${item.word.word} · ${item.word.zh}`; $('#term-status').textContent = `第 ${(index % times) + 1} / ${times} 遍；结束后停顿 1 秒。`; });
+      if (completed) { $('#term-current').textContent = '完成！'; $('#term-status').textContent = '可以切换为每词 1 遍或 3 遍再练一次。'; }
+    }));
+    $('#play-examples').addEventListener('click', async () => { const examples = pairExamples(currentLesson()); const completed = await speakSequence(examples.map(e => ({ text: e.es })), { rate: state.rate.examples }, (item, index) => { $('#example-current').textContent = item.text; $('#example-status').textContent = `第 ${index + 1} / 5 句；本句朗读 1 遍。`; }); if (completed) $('#example-status').textContent = '例句已朗读完毕。'; });
+    $('#play-dialogue').addEventListener('click', async () => { const dialogue = makeDialogue(currentLesson()).slice(state.dialogueStart); const completed = await speakSequence(dialogue.map(l => ({ text: l[1], role: l[0] })), { rate: state.rate.dialogue }, (item, index) => { const position = state.dialogueStart + index; $('#dialogue-progress').value = position; $('#dialogue-current').textContent = `${item.role}：${item.text}`; $('#dialogue-status').textContent = `第 ${position + 1} / 5 句；本句朗读 1 遍。`; }); if (completed) { $('#dialogue-progress').value = 5; $('#dialogue-position').textContent = '对话完成'; $('#dialogue-status').textContent = 'A 与 B 的整段对话已朗读完毕。'; } });
+    $('#dialogue-progress').addEventListener('input', event => { stopAll(); const value = Number(event.target.value); state.dialogueStart = value === 5 ? 0 : value; $('#dialogue-position').textContent = value === 5 ? '已到结尾；再次播放会从第一句开始' : `从第 ${value + 1} / 5 句开始播放`; });
+    document.querySelectorAll('.speed-controls').forEach(group => group.addEventListener('click', event => { const button = event.target.closest('.speed'); if (!button) return; const target = group.dataset.target; state.rate[target] = Number(button.dataset.rate); group.querySelectorAll('.speed').forEach(b => b.classList.toggle('active', b === button)); }));
+    document.querySelectorAll('.stop-all').forEach(button => button.addEventListener('click', () => { stopAll(); $('#term-status').textContent = '已停止。'; $('#example-status').textContent = '已停止。'; $('#dialogue-status').textContent = '已停止。'; }));
+    function selectLesson(id) { state.lessonId = Math.min(lessons.length, Math.max(1, id)); history.replaceState(null, '', `#leccion-${state.lessonId}`); localStorage.setItem('spanish-course-lesson', state.lessonId); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    $('#lesson-nav').addEventListener('click', event => { const link = event.target.closest('[data-lesson]'); if (!link) return; event.preventDefault(); selectLesson(Number(link.dataset.lesson)); });
+    ['previous', 'previous-bottom'].forEach(id => $(`#${id}`).addEventListener('click', () => selectLesson(state.lessonId - 1)));
+    ['next', 'next-bottom'].forEach(id => $(`#${id}`).addEventListener('click', () => selectLesson(state.lessonId + 1)));
+    const hashId = Number(location.hash.replace('#leccion-', '')); const savedId = Number(localStorage.getItem('spanish-course-lesson'));
+    state.lessonId = lessons.some(l => l.id === hashId) ? hashId : (lessons.some(l => l.id === savedId) ? savedId : 1);
+    render();
+  </script>
+</body>
+</html>

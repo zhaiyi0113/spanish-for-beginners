@@ -17,6 +17,7 @@
     .sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; padding: 24px 16px; background: #12315f; color: #fff; }
     .sidebar h1 { margin: 0 0 10px; font-size: 23px; }
     .sidebar p { margin: 0 0 18px; color: #d8e6ff; font-size: 14px; line-height: 1.6; }
+    .language-toggle { width: 100%; margin: 0 0 18px; background: #fff; color: #12315f; font-weight: 750; }
     .lesson-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .lesson-link { display: block; min-height: 64px; padding: 9px; border-radius: 10px; background: rgba(255,255,255,.1); color: #fff; text-decoration: none; line-height: 1.35; }
     .lesson-link:hover, .lesson-link.active { background: #fff; color: #12315f; }
@@ -66,8 +67,9 @@
 <body>
   <div class="shell">
     <aside class="sidebar">
-      <h1>西班牙语 50 课</h1>
-      <p>每天 10 个重点词。前 30 课建立日常交流能力，后 20 课练电视剧、电影、播客与新闻理解。</p>
+      <h1 id="site-name">西班牙语 50 课</h1>
+      <p id="site-intro">每天 10 个重点词。前 30 课建立日常交流能力，后 20 课练电视剧、电影、播客与新闻理解。</p>
+      <button id="language-toggle" class="language-toggle" type="button">English</button>
       <nav id="lesson-nav" class="lesson-grid" aria-label="选择课程"></nav>
     </aside>
     <main>
@@ -80,24 +82,24 @@
       </div>
 
       <section class="panel">
-        <h3>单词跟读</h3>
+        <h3 id="term-heading">单词跟读</h3>
         <div id="term-current" class="reader">准备开始</div>
         <div id="term-status" class="status">选择每词朗读次数；每一次结束后停顿 1 秒。</div>
         <div class="controls">
-          <button class="primary term-mode" data-times="3" type="button">每词读 3 遍</button>
-          <button class="secondary term-mode" data-times="1" type="button">每词读 1 遍</button>
+          <button id="term-three" class="primary term-mode" data-times="3" type="button">每词读 3 遍</button>
+          <button id="term-one" class="secondary term-mode" data-times="1" type="button">每词读 1 遍</button>
           <button class="secondary stop-all" type="button">停止</button>
         </div>
       </section>
 
       <section>
-        <h3>10 个单词卡</h3>
-        <p class="note">点“播放”可单独听词。名词会保留冠词；动词卡会显示本课常用形式。</p>
+        <h3 id="word-heading">10 个单词卡</h3>
+        <p id="word-note" class="note">点“播放”可单独听词。名词会保留冠词；动词卡会显示本课常用形式。</p>
         <div id="word-grid" class="word-grid"></div>
       </section>
 
       <section class="panel">
-        <h3>5 个例句</h3>
+        <h3 id="example-heading">5 个例句</h3>
         <div id="example-current" class="reader">准备听例句</div>
         <div id="example-status" class="status"></div>
         <div class="controls">
@@ -109,7 +111,7 @@
       <div id="examples" class="examples"></div>
 
       <section class="panel">
-        <h3>微型对话</h3>
+        <h3 id="dialogue-heading">微型对话</h3>
         <div id="dialogue-current" class="reader">准备听 A 和 B 的对话</div>
         <div id="dialogue-status" class="status">整段对话朗读 1 遍。</div>
         <input id="dialogue-progress" class="progress" type="range" min="0" max="5" value="0" step="1" aria-label="对话播放进度">
@@ -123,7 +125,7 @@
       <div id="dialogue" class="dialogue"></div>
 
       <section class="panel">
-        <h3>今日语法</h3>
+        <h3 id="grammar-heading">今日语法</h3>
         <ol id="grammar" class="grammar"></ol>
       </section>
       <div class="footer-nav"><button id="previous-bottom" class="secondary" type="button">← 上一课</button><button id="next-bottom" class="primary" type="button">下一课 →</button></div>
@@ -184,11 +186,78 @@
 真实内容综合练习::综合使用日常交流、影视和新闻理解策略。::entender=理解;la palabra clave=关键词;el contexto=语境;repetir=重复;pausar=暂停;anotar=记下;buscar=查找;adivinar=猜测;practicar=练习;progresar=进步
 `.trim();
 
+    const englishRows = `
+hello;to be called;how;friend;home;wine;to want;yes;thank you;to come
+to be;from;Spanish;Chinese;nationality;to live;city;here;there;to know
+family;mother;father;brother;sister;son;daughter;partner;married;single
+zero;ten;twenty;number;year;age;telephone;email;address;code
+today;tomorrow;yesterday;now;morning;afternoon;night;week;Monday;weekend
+to wake up;to get up;to shower;to have breakfast;to work;to eat;to return;to rest;to go to bed;to sleep
+job;office;meeting;task;project;to study;class;teacher;classmate or colleague;to learn
+street;square;neighborhood;city center;park;shop;bank;station;museum;pharmacy
+right;left;straight ahead;near;far;to turn;to cross;to continue;map;corner
+how much;price;cheap;expensive;to buy;to pay;cash;card;discount;change
+shirt;trousers;dress;shoes;red;blue;black;white;size;to try on
+apartment;room;kitchen;bathroom;living room;table;chair;bed;window;door
+bread;milk;water;fruit;vegetable;rice;chicken;cheese;bottle;to need
+coffee;tea;juice;with milk;without sugar;please;to take away;bill;to drink or take;to serve
+menu;dish;soup;salad;delicious;to be hungry;to recommend;to order;to share;tip
+to like;to read;to draw;sport;to walk;to cook;to travel;music;book;film
+to arrange to meet;plan;free;busy;this afternoon;at eight;first;after;to confirm;to cancel
+sunny;to rain;to be cold;to be hot;wind;cloud;spring;summer;autumn;winter
+head;eye;hand;stomach;tired;happy;worried;to feel;better;bad
+doctor;medicine;prescription;fever;pain;to have a cough;appointment;urgent;it hurts;to get well
+train;bus;metro;ticket;stop;platform;to leave;to arrive;timetable;delay
+airport;flight;suitcase;passport;boarding gate;to check in;security check;seat;to board;to land
+hotel;reservation;reception;key;night;a double room;to include;breakfast;password;late checkout
+trip;tourist;entry ticket;visit;view;beautiful;famous;to take photos;to get lost;to enjoy
+to happen;yesterday afternoon;last night;I went;I saw;I did;I had;I said;to start;to end
+I woke up;I went to;I ate;I spoke;I bought;I returned;I saw;I was;I called;I rested
+suddenly;then;first;then;at the end;to find;to lose;to decide;to happen;to tell
+before;when I was a child;always;often;people;to seem;to wear;there was or were;to be;to remember
+more;less;better;worse;than;to prefer;same;different;so or as;like or as
+I am going to;I want;I hope;maybe;soon;next;trip;to try;to achieve;to dream
+to call;message;to reply;to leave a message;mobile phone;to ring;online;to send;to receive;to notify
+network;app;account;to post;to follow;to share;to comment;link;news;viral
+to believe;to think;to agree;of course;maybe;to depend;important;reason;to explain;to respect
+problem;solution;to work;to fix;to try;to need help;therefore;however;to solve;calm
+party;to invite;to bring;to celebrate;congratulations;to meet people;to toast;to stay;to leave;pleased to meet you
+report;deadline;to submit;to review;priority;team;to propose;improvement;to meet;to update
+exam;question;answer;grade;to review;to practise;to understand;to explain;to pass;to improve
+TV series;episode;character;plot;scene;to hide;to discover;secret;ending;to continue
+film;director;actor;actress;story;exciting;boring;beginning;conflict;to recommend
+song;lyrics;podcast;voice;to listen;to repeat;interview;topic;idea;to understand
+news;headline;to announce;to happen;government;country;city;increase;drop;according to
+forecast;temperature;storm;rain;snow;risk;to affect;to continue;to improve;to predict
+service;public transport;housing;safety;neighborhood;to improve;to offer;measure;community;to participate
+technology;device;screen;battery;to update;to download;function;fast;to fail;to recommend
+company;employment;salary;market;to grow;to reduce;to invest;data;sector;figure
+match;team;to win;to lose;player;goal;result;competition;to stand out;to celebrate
+comment;criticism;opinion;to support;to reject;to seem;to argue;evidence;example;to conclude
+culture;tradition;custom;region;language;experience;to visit;to discover;local;to recommend
+to summarize;at the beginning;afterwards;to mention;to explain;detail;cause;consequence;finally;in other words
+to understand;key word;context;to repeat;to pause;to note down;to look up;to guess;to practise;to make progress
+`.trim().split('\n');
+
+    const englishTitles = [
+      'First Meetings and Being a Guest', 'Identity, Nationality and City', 'Family and Relationships', 'Numbers, Age and Contact Information', 'Time and Dates',
+      'Daily Routine', 'Work and Study', 'Places in the City', 'Asking for Directions', 'Shopping and Prices',
+      'Clothes and Colours', 'Home and Rooms', 'Supermarket and Ingredients', 'Ordering at a Café', 'Eating at a Restaurant',
+      'Hobbies and Leisure', 'Making Plans', 'Weather and Seasons', 'Body and Feelings', 'Pharmacy and Doctor',
+      'Station and Transport', 'Airport and Boarding', 'Hotel Check-in', 'Travel and Sights', 'What Happened This Week',
+      'Yesterday’s Activities', 'A Short Story in the Past', 'Describing People and Scenes', 'Comparisons and Preferences', 'Plans, Wishes and Future',
+      'Calls and Messages', 'Internet and Social Media', 'Opinions and Agreement', 'Solving Problems', 'Family Gatherings',
+      'Work Communication', 'School and Courses', 'Watching TV Series', 'Films and Stories', 'Music and Podcasts',
+      'News Headlines', 'Weather News', 'Society and Public Services', 'Technology and Products', 'Economic and Work News',
+      'Sports News', 'Opinions and Reviews', 'Culture and Travel Shows', 'Retelling a Clip', 'Real-Content Review'
+    ];
+
     const lessons = rows.split('\n').map((row, index) => {
       const [title, goal, words] = row.split('::');
-      return { id: index + 1, title, goal, words: words.split(';').map(item => {
+      const englishWords = englishRows[index].split(';');
+      return { id: index + 1, title, titleEn: englishTitles[index], goal, words: words.split(';').map((item, wordIndex) => {
         const [word, zh] = item.split('=');
-        return { word, zh, pos: inferPos(word), note: inferNote(word), forms: inferForms(word) };
+        return { word, zh, en: englishWords[wordIndex], pos: inferPos(word), note: inferNote(word), forms: inferForms(word) };
       }) };
     });
 
@@ -211,27 +280,60 @@
     function pairExamples(lesson) {
       return Array.from({ length: 5 }, (_, i) => {
         const first = lesson.words[i * 2], second = lesson.words[i * 2 + 1];
-        return { es: `Hoy practicamos «${first.word}» y «${second.word}».`, zh: `今天练习“${first.zh}”和“${second.zh}”。` };
+        return {
+          es: `Hoy practicamos «${first.word}» y «${second.word}».`,
+          zh: `今天练习“${first.zh}”和“${second.zh}”。`,
+          en: `Today we practise “${first.en}” and “${second.en}”.`
+        };
       });
     }
     function makeDialogue(lesson) {
       const w = lesson.words;
       return [
-        ['A', `¿Practicamos «${w[0].word}» y «${w[1].word}»?`, `我们练习“${w[0].zh}”和“${w[1].zh}”吗？`],
-        ['B', `Sí. También usamos «${w[2].word}» y «${w[3].word}».`, `好。我们也会用到“${w[2].zh}”和“${w[3].zh}”。`],
-        ['A', `Para este tema necesito «${w[4].word}» y «${w[5].word}».`, `这个主题里，我需要“${w[4].zh}”和“${w[5].zh}”。`],
-        ['B', `Perfecto: añadimos «${w[6].word}», «${w[7].word}» y «${w[8].word}».`, `好：再加上“${w[6].zh}”“${w[7].zh}”和“${w[8].zh}”。`],
-        ['A', `Y terminamos con «${w[9].word}».`, `最后是“${w[9].zh}”。`]
+        ['A', `¿Practicamos «${w[0].word}» y «${w[1].word}»?`, `我们练习“${w[0].zh}”和“${w[1].zh}”吗？`, `Shall we practise “${w[0].en}” and “${w[1].en}”?`],
+        ['B', `Sí. También usamos «${w[2].word}» y «${w[3].word}».`, `好。我们也会用到“${w[2].zh}”和“${w[3].zh}”。`, `Yes. We also use “${w[2].en}” and “${w[3].en}”.`],
+        ['A', `Para este tema necesito «${w[4].word}» y «${w[5].word}».`, `这个主题里，我需要“${w[4].zh}”和“${w[5].zh}”。`, `For this topic I need “${w[4].en}” and “${w[5].en}”.`],
+        ['B', `Perfecto: añadimos «${w[6].word}», «${w[7].word}» y «${w[8].word}».`, `好：再加上“${w[6].zh}”“${w[7].zh}”和“${w[8].zh}”。`, `Perfect: we add “${w[6].en}”, “${w[7].en}” and “${w[8].en}”.`],
+        ['A', `Y terminamos con «${w[9].word}».`, `最后是“${w[9].zh}”。`, `And we finish with “${w[9].en}”.`]
       ];
     }
     function grammarFor(lesson) {
+      if (isEnglish()) {
+        if (lesson.id <= 10) return ['Learn nouns together with their articles: <strong>el</strong> is often masculine and <strong>la</strong> is often feminine.', 'Memorise high-frequency chunks rather than isolated words: for example, <strong>me llamo</strong> and <strong>¿cuánto cuesta?</strong>.'];
+        if (lesson.id <= 24) return ['For requests, first learn complete polite sentences: <strong>Quiero…</strong>, <strong>¿Puede…?</strong> and <strong>Por favor.</strong>', 'When a verb changes form, first learn to recognise common forms in context; do not rush to memorise a whole conjugation table.'];
+        if (lesson.id <= 37) return ['For a completed past event, first identify who did what and when.', 'Connectors make your story easier to follow: <strong>primero</strong>, <strong>luego</strong> and <strong>al final</strong>.'];
+        return ['For TV, films and news, first catch key nouns, verbs and numbers, then use context to infer the main idea.', 'Do not pause for every unknown word. Finish the sentence or short section first, then decide whether it affects understanding.'];
+      }
       if (lesson.id <= 10) return ['名词尽量连同冠词记忆：<strong>el</strong> 常见于阳性名词，<strong>la</strong> 常见于阴性名词。', '先掌握高频小组合，而不是孤立背词：例如 <strong>me llamo</strong>、<strong>¿cuánto cuesta?</strong>。'];
       if (lesson.id <= 24) return ['表达请求时，先记完整的礼貌句：<strong>Quiero…</strong>、<strong>¿Puede…?</strong>、<strong>Por favor.</strong>', '遇到动词变化，先能听出常用形式即可；不要急着背完整张变位表。'];
       if (lesson.id <= 37) return ['讲过去的具体事件，优先留意动词过去式；先抓“谁、何时、做了什么”。', '连接词能让表达更连贯：<strong>primero</strong>、<strong>luego</strong>、<strong>al final</strong>。'];
       return ['听影视或新闻时，先抓名词、动词和数字等关键词，再回到上下文猜整体意思。', '不认识的词先不要暂停：听完一句或一小段后，再判断它是否真的影响理解。'];
     }
 
-    const state = { lessonId: 1, rate: { examples: 1, dialogue: 1 }, dialogueStart: 0, run: 0 };
+    const state = { lessonId: 1, lang: 'zh', rate: { examples: 1, dialogue: 1 }, dialogueStart: 0, run: 0 };
+    const isEnglish = () => state.lang === 'en';
+    const meaningFor = word => isEnglish() ? word.en : word.zh;
+    const translationFor = item => isEnglish() ? item.en : item.zh;
+    function posFor(word) {
+      if (!isEnglish()) return word.pos;
+      return word.pos === '名词' ? 'Noun' : word.pos === '动词' ? 'Verb' : 'Word / expression';
+    }
+    function noteFor(word) {
+      if (!isEnglish()) return word.note;
+      if (/^el /.test(word.word)) return 'Learn it together with el; it is usually a masculine noun.';
+      if (/^la /.test(word.word)) return 'Learn it together with la; it is usually a feminine noun.';
+      if (word.pos === '动词') return 'Listen to the infinitive, then notice common forms in examples and dialogue.';
+      return 'Memorise it together with examples and dialogue.';
+    }
+    function formsFor(word) {
+      if (!isEnglish()) return word.forms;
+      const forms = { ser:['soy = I am','eres = you are'], vivir:['vivo = I live','vives = you live'], querer:['quiero = I want','quieres = you want'], venir:['vengo = I come','viene = he or she comes'], gustar:['me gusta = I like','te gusta = you like'], tener:['tengo = I have','tienes = you have'], ir:['voy = I go','vas = you go'], hablar:['hablo = I speak','hablas = you speak'], trabajar:['trabajo = I work','trabajas = you work'] };
+      return forms[word.word] || [];
+    }
+    const labels = {
+      zh: { siteName:'西班牙语 50 课', siteIntro:'每天 10 个重点词。前 30 课建立日常交流能力，后 20 课练电视剧、电影、播客与新闻理解。', switch:'English', lesson:'第', lessonSuffix:'课', daily:'每日 10 词', goal:'学习本主题的 10 个高频词，并在例句和对话中练习。', previous:'← 上一课', next:'下一课 →', termHeading:'单词跟读', termThree:'每词读 3 遍', termOne:'每词读 1 遍', stop:'停止', wordHeading:'10 个单词卡', wordNote:'点“播放”可单独听词。名词会保留冠词；动词卡会显示本课常用形式。', exampleHeading:'5 个例句', dialogueHeading:'微型对话', grammarHeading:'今日语法', play:'播放', playSentence:'播放这句', pos:'词性：', note:'提示：', forms:'常用形式：', speed:'速度：' },
+      en: { siteName:'Spanish in 50 Lessons', siteIntro:'Ten key words a day. The first 30 lessons build everyday conversation; the final 20 develop TV, film, podcast and news comprehension.', switch:'中文', lesson:'Lesson', lessonSuffix:'', daily:'10 words a day', goal:'Learn 10 high-frequency words for this theme and practise them in examples and dialogue.', previous:'← Previous lesson', next:'Next lesson →', termHeading:'Word practice', termThree:'Read each word 3 times', termOne:'Read each word once', stop:'Stop', wordHeading:'10 word cards', wordNote:'Use Play to hear one word. Nouns keep their articles; verb cards show common forms when available.', exampleHeading:'5 example sentences', dialogueHeading:'Mini dialogue', grammarHeading:'Grammar for today', play:'Play', playSentence:'Play this line', pos:'Part of speech: ', note:'Note: ', forms:'Common forms: ', speed:'Speed: ' }
+    };
     let spanishVoices = [];
     function loadVoices() { spanishVoices = speechSynthesis.getVoices().filter(v => v.lang.toLowerCase().startsWith('es')); }
     loadVoices(); speechSynthesis.addEventListener('voiceschanged', loadVoices);
@@ -268,22 +370,36 @@
 
     const $ = selector => document.querySelector(selector);
     function currentLesson() { return lessons[state.lessonId - 1]; }
+    const localized = (zh, en) => isEnglish() ? en : zh;
+    function renderStatic() {
+      const l = labels[state.lang];
+      $('#site-name').textContent = l.siteName; $('#site-intro').textContent = l.siteIntro; $('#language-toggle').textContent = l.switch;
+      $('#term-heading').textContent = l.termHeading; $('#term-three').textContent = l.termThree; $('#term-one').textContent = l.termOne;
+      $('#word-heading').textContent = l.wordHeading; $('#word-note').textContent = l.wordNote; $('#example-heading').textContent = l.exampleHeading;
+      $('#dialogue-heading').textContent = l.dialogueHeading; $('#grammar-heading').textContent = l.grammarHeading;
+      $('#play-examples').textContent = isEnglish() ? 'Play all examples' : '播放全部例句'; $('#play-dialogue').textContent = isEnglish() ? 'Play dialogue' : '播放对话';
+      document.querySelectorAll('.stop-all').forEach(button => button.textContent = l.stop);
+      document.querySelectorAll('.speed-controls span').forEach(span => span.textContent = l.speed);
+      $('#previous').textContent = $('#previous-bottom').textContent = l.previous; $('#next').textContent = $('#next-bottom').textContent = l.next;
+    }
     function renderNav() {
-      $('#lesson-nav').innerHTML = lessons.map(l => `<a class="lesson-link ${l.id === state.lessonId ? 'active' : ''}" href="#leccion-${l.id}" data-lesson="${l.id}"><span class="lesson-number">第 ${l.id} 课</span><span class="lesson-name">${l.title}</span></a>`).join('');
+      const l = labels[state.lang];
+      $('#lesson-nav').innerHTML = lessons.map(lesson => `<a class="lesson-link ${lesson.id === state.lessonId ? 'active' : ''}" href="#leccion-${lesson.id}" data-lesson="${lesson.id}"><span class="lesson-number">${l.lesson} ${lesson.id}${l.lessonSuffix}</span><span class="lesson-name">${isEnglish() ? lesson.titleEn : lesson.title}</span></a>`).join('');
     }
     function render() {
       stopAll(); state.dialogueStart = 0;
+      renderStatic();
       const lesson = currentLesson(); const examples = pairExamples(lesson); const dialogue = makeDialogue(lesson);
-      $('#lesson-number').textContent = `LECCIÓN ${String(lesson.id).padStart(2, '0')} · 每日 10 词`;
-      $('#lesson-title').textContent = lesson.title;
-      $('#lesson-goal').textContent = lesson.goal;
-      $('#term-current').textContent = '准备开始'; $('#term-status').textContent = '选择每词朗读次数；每一次结束后停顿 1 秒。';
-      $('#example-current').textContent = '准备听例句'; $('#example-status').textContent = '5 个例句，每句朗读 1 遍。';
-      $('#dialogue-current').textContent = '准备听 A 和 B 的对话'; $('#dialogue-status').textContent = '整段对话朗读 1 遍。';
-      $('#dialogue-progress').value = 0; $('#dialogue-position').textContent = '从第 1 / 5 句开始播放';
-      $('#word-grid').innerHTML = lesson.words.map((w, index) => `<article class="word-card"><div class="word-top"><div><div class="word">${w.word}</div><div class="translation">${w.zh}</div></div><button class="secondary small word-play" data-index="${index}" type="button">播放</button></div><div class="meta"><strong>词性：</strong>${w.pos}</div><div class="meta"><strong>提示：</strong>${w.note}</div>${w.forms.length ? `<div class="forms"><strong>常用形式：</strong>${w.forms.map(f => `<button class="secondary small form-play" data-form="${f.split('＝')[0]}" type="button">${f}</button>`).join(' ')}</div>` : ''}</article>`).join('');
-      $('#examples').innerHTML = examples.map((e, index) => `<article class="example"><span class="spanish">${e.es}</span><button class="secondary small example-play" data-index="${index}" type="button">播放这句</button><div class="chinese">${e.zh}</div></article>`).join('');
-      $('#dialogue').innerHTML = dialogue.map((line, index) => `<article class="line"><span class="speaker">${line[0]}</span><span class="spanish">${line[1]}</span><button class="secondary small dialogue-play" data-index="${index}" type="button">播放这句</button><div class="chinese">${line[2]}</div></article>`).join('');
+      $('#lesson-number').textContent = isEnglish() ? `LESSON ${String(lesson.id).padStart(2, '0')} · ${labels.en.daily}` : `LECCIÓN ${String(lesson.id).padStart(2, '0')} · ${labels.zh.daily}`;
+      $('#lesson-title').textContent = isEnglish() ? lesson.titleEn : lesson.title;
+      $('#lesson-goal').textContent = isEnglish() ? labels.en.goal : lesson.goal;
+      $('#term-current').textContent = localized('准备开始', 'Ready to begin'); $('#term-status').textContent = localized('选择每词朗读次数；每一次结束后停顿 1 秒。', 'Choose a repetition count; every reading is followed by a one-second pause.');
+      $('#example-current').textContent = localized('准备听例句', 'Ready to hear examples'); $('#example-status').textContent = localized('5 个例句，每句朗读 1 遍。', 'Five examples; each is read once.');
+      $('#dialogue-current').textContent = localized('准备听 A 和 B 的对话', 'Ready to hear the A/B dialogue'); $('#dialogue-status').textContent = localized('整段对话朗读 1 遍。', 'The full dialogue is read once.');
+      $('#dialogue-progress').value = 0; $('#dialogue-position').textContent = localized('从第 1 / 5 句开始播放', 'Start from line 1 / 5');
+      $('#word-grid').innerHTML = lesson.words.map((w, index) => { const forms = formsFor(w); return `<article class="word-card"><div class="word-top"><div><div class="word">${w.word}</div><div class="translation">${meaningFor(w)}</div></div><button class="secondary small word-play" data-index="${index}" type="button">${labels[state.lang].play}</button></div><div class="meta"><strong>${labels[state.lang].pos}</strong>${posFor(w)}</div><div class="meta"><strong>${labels[state.lang].note}</strong>${noteFor(w)}</div>${forms.length ? `<div class="forms"><strong>${labels[state.lang].forms}</strong>${forms.map(f => `<button class="secondary small form-play" data-form="${f.split(/[＝=]/)[0]}" type="button">${f}</button>`).join(' ')}</div>` : ''}</article>`; }).join('');
+      $('#examples').innerHTML = examples.map((e, index) => `<article class="example"><span class="spanish">${e.es}</span><button class="secondary small example-play" data-index="${index}" type="button">${labels[state.lang].playSentence}</button><div class="chinese">${translationFor(e)}</div></article>`).join('');
+      $('#dialogue').innerHTML = dialogue.map((line, index) => `<article class="line"><span class="speaker">${line[0]}</span><span class="spanish">${line[1]}</span><button class="secondary small dialogue-play" data-index="${index}" type="button">${labels[state.lang].playSentence}</button><div class="chinese">${localized(line[2], line[3])}</div></article>`).join('');
       $('#grammar').innerHTML = grammarFor(lesson).map(g => `<li>${g}</li>`).join('');
       renderNav(); bindLessonContent();
       $('#previous').disabled = $('#previous-bottom').disabled = lesson.id === 1;
@@ -291,27 +407,29 @@
     }
     function bindLessonContent() {
       const lesson = currentLesson(), examples = pairExamples(lesson), dialogue = makeDialogue(lesson);
-      document.querySelectorAll('.word-play').forEach(button => button.addEventListener('click', async () => { const w = lesson.words[Number(button.dataset.index)]; $('#term-current').textContent = `${w.word} · ${w.zh}`; $('#term-status').textContent = '本词朗读 1 遍。'; await speak(w.word); }));
-      document.querySelectorAll('.form-play').forEach(button => button.addEventListener('click', async () => { $('#term-current').textContent = button.dataset.form; $('#term-status').textContent = '这个动词形式朗读 1 遍。'; await speak(button.dataset.form); }));
-      document.querySelectorAll('.example-play').forEach(button => button.addEventListener('click', async () => { const e = examples[Number(button.dataset.index)]; $('#example-current').textContent = e.es; $('#example-status').textContent = '本句朗读 1 遍。'; await speak(e.es, { rate: state.rate.examples }); }));
-      document.querySelectorAll('.dialogue-play').forEach(button => button.addEventListener('click', async () => { const l = dialogue[Number(button.dataset.index)]; $('#dialogue-current').textContent = `${l[0]}：${l[1]}`; $('#dialogue-status').textContent = '本句朗读 1 遍。'; await speak(l[1], { rate: state.rate.dialogue, role: l[0] }); }));
+      document.querySelectorAll('.word-play').forEach(button => button.addEventListener('click', async () => { const w = lesson.words[Number(button.dataset.index)]; $('#term-current').textContent = `${w.word} · ${meaningFor(w)}`; $('#term-status').textContent = localized('本词朗读 1 遍。', 'This word is read once.'); await speak(w.word); }));
+      document.querySelectorAll('.form-play').forEach(button => button.addEventListener('click', async () => { $('#term-current').textContent = button.dataset.form; $('#term-status').textContent = localized('这个动词形式朗读 1 遍。', 'This verb form is read once.'); await speak(button.dataset.form); }));
+      document.querySelectorAll('.example-play').forEach(button => button.addEventListener('click', async () => { const e = examples[Number(button.dataset.index)]; $('#example-current').textContent = e.es; $('#example-status').textContent = localized('本句朗读 1 遍。', 'This sentence is read once.'); await speak(e.es, { rate: state.rate.examples }); }));
+      document.querySelectorAll('.dialogue-play').forEach(button => button.addEventListener('click', async () => { const l = dialogue[Number(button.dataset.index)]; $('#dialogue-current').textContent = `${l[0]}：${l[1]}`; $('#dialogue-status').textContent = localized('本句朗读 1 遍。', 'This line is read once.'); await speak(l[1], { rate: state.rate.dialogue, role: l[0] }); }));
     }
     document.querySelectorAll('.term-mode').forEach(button => button.addEventListener('click', async () => {
       const times = Number(button.dataset.times), lesson = currentLesson();
       const items = lesson.words.flatMap(w => Array.from({ length: times }, () => ({ text: w.word, word: w })));
-      const completed = await speakSequence(items, { pauseAfterLast: true }, (item, index) => { $('#term-current').textContent = `${item.word.word} · ${item.word.zh}`; $('#term-status').textContent = `第 ${(index % times) + 1} / ${times} 遍；结束后停顿 1 秒。`; });
-      if (completed) { $('#term-current').textContent = '完成！'; $('#term-status').textContent = '可以切换为每词 1 遍或 3 遍再练一次。'; }
+      const completed = await speakSequence(items, { pauseAfterLast: true }, (item, index) => { $('#term-current').textContent = `${item.word.word} · ${meaningFor(item.word)}`; $('#term-status').textContent = localized(`第 ${(index % times) + 1} / ${times} 遍；结束后停顿 1 秒。`, `Reading ${(index % times) + 1} / ${times}; one-second pause follows.`); });
+      if (completed) { $('#term-current').textContent = localized('完成！', 'Finished!'); $('#term-status').textContent = localized('可以切换为每词 1 遍或 3 遍再练一次。', 'Choose one or three readings per word to practise again.'); }
     }));
-    $('#play-examples').addEventListener('click', async () => { const examples = pairExamples(currentLesson()); const completed = await speakSequence(examples.map(e => ({ text: e.es })), { rate: state.rate.examples }, (item, index) => { $('#example-current').textContent = item.text; $('#example-status').textContent = `第 ${index + 1} / 5 句；本句朗读 1 遍。`; }); if (completed) $('#example-status').textContent = '例句已朗读完毕。'; });
-    $('#play-dialogue').addEventListener('click', async () => { const dialogue = makeDialogue(currentLesson()).slice(state.dialogueStart); const completed = await speakSequence(dialogue.map(l => ({ text: l[1], role: l[0] })), { rate: state.rate.dialogue }, (item, index) => { const position = state.dialogueStart + index; $('#dialogue-progress').value = position; $('#dialogue-current').textContent = `${item.role}：${item.text}`; $('#dialogue-status').textContent = `第 ${position + 1} / 5 句；本句朗读 1 遍。`; }); if (completed) { $('#dialogue-progress').value = 5; $('#dialogue-position').textContent = '对话完成'; $('#dialogue-status').textContent = 'A 与 B 的整段对话已朗读完毕。'; } });
-    $('#dialogue-progress').addEventListener('input', event => { stopAll(); const value = Number(event.target.value); state.dialogueStart = value === 5 ? 0 : value; $('#dialogue-position').textContent = value === 5 ? '已到结尾；再次播放会从第一句开始' : `从第 ${value + 1} / 5 句开始播放`; });
+    $('#play-examples').addEventListener('click', async () => { const examples = pairExamples(currentLesson()); const completed = await speakSequence(examples.map(e => ({ text: e.es })), { rate: state.rate.examples }, (item, index) => { $('#example-current').textContent = item.text; $('#example-status').textContent = localized(`第 ${index + 1} / 5 句；本句朗读 1 遍。`, `Sentence ${index + 1} / 5; read once.`); }); if (completed) $('#example-status').textContent = localized('例句已朗读完毕。', 'Examples have finished.'); });
+    $('#play-dialogue').addEventListener('click', async () => { const dialogue = makeDialogue(currentLesson()).slice(state.dialogueStart); const completed = await speakSequence(dialogue.map(l => ({ text: l[1], role: l[0] })), { rate: state.rate.dialogue }, (item, index) => { const position = state.dialogueStart + index; $('#dialogue-progress').value = position; $('#dialogue-current').textContent = `${item.role}：${item.text}`; $('#dialogue-status').textContent = localized(`第 ${position + 1} / 5 句；本句朗读 1 遍。`, `Line ${position + 1} / 5; read once.`); }); if (completed) { $('#dialogue-progress').value = 5; $('#dialogue-position').textContent = localized('对话完成', 'Dialogue complete'); $('#dialogue-status').textContent = localized('A 与 B 的整段对话已朗读完毕。', 'The full A/B dialogue has finished.'); } });
+    $('#dialogue-progress').addEventListener('input', event => { stopAll(); const value = Number(event.target.value); state.dialogueStart = value === 5 ? 0 : value; $('#dialogue-position').textContent = value === 5 ? localized('已到结尾；再次播放会从第一句开始', 'At the end; play starts again from line one') : localized(`从第 ${value + 1} / 5 句开始播放`, `Start from line ${value + 1} / 5`); });
     document.querySelectorAll('.speed-controls').forEach(group => group.addEventListener('click', event => { const button = event.target.closest('.speed'); if (!button) return; const target = group.dataset.target; state.rate[target] = Number(button.dataset.rate); group.querySelectorAll('.speed').forEach(b => b.classList.toggle('active', b === button)); }));
-    document.querySelectorAll('.stop-all').forEach(button => button.addEventListener('click', () => { stopAll(); $('#term-status').textContent = '已停止。'; $('#example-status').textContent = '已停止。'; $('#dialogue-status').textContent = '已停止。'; }));
+    document.querySelectorAll('.stop-all').forEach(button => button.addEventListener('click', () => { stopAll(); $('#term-status').textContent = localized('已停止。', 'Stopped.'); $('#example-status').textContent = localized('已停止。', 'Stopped.'); $('#dialogue-status').textContent = localized('已停止。', 'Stopped.'); }));
     function selectLesson(id) { state.lessonId = Math.min(lessons.length, Math.max(1, id)); history.replaceState(null, '', `#leccion-${state.lessonId}`); localStorage.setItem('spanish-course-lesson', state.lessonId); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
     $('#lesson-nav').addEventListener('click', event => { const link = event.target.closest('[data-lesson]'); if (!link) return; event.preventDefault(); selectLesson(Number(link.dataset.lesson)); });
     ['previous', 'previous-bottom'].forEach(id => $(`#${id}`).addEventListener('click', () => selectLesson(state.lessonId - 1)));
     ['next', 'next-bottom'].forEach(id => $(`#${id}`).addEventListener('click', () => selectLesson(state.lessonId + 1)));
-    const hashId = Number(location.hash.replace('#leccion-', '')); const savedId = Number(localStorage.getItem('spanish-course-lesson'));
+    $('#language-toggle').addEventListener('click', () => { state.lang = isEnglish() ? 'zh' : 'en'; localStorage.setItem('spanish-course-language', state.lang); render(); });
+    const hashId = Number(location.hash.replace('#leccion-', '')); const savedId = Number(localStorage.getItem('spanish-course-lesson')); const savedLanguage = localStorage.getItem('spanish-course-language');
+    state.lang = savedLanguage === 'en' ? 'en' : 'zh';
     state.lessonId = lessons.some(l => l.id === hashId) ? hashId : (lessons.some(l => l.id === savedId) ? savedId : 1);
     render();
   </script>

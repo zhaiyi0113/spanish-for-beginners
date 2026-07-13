@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>西班牙语 150 课｜从零基础到看懂内容</title>
+  <title>西班牙语 200 课｜从零基础到看懂内容</title>
   <style>
     :root { color: #1f2937; background: #f7f9fc; font-family: system-ui, "Microsoft YaHei", sans-serif; }
     * { box-sizing: border-box; }
@@ -126,7 +126,7 @@
 <body>
   <div class="shell">
     <aside class="sidebar">
-      <h1 id="site-name">西班牙语 150 课</h1>
+      <h1 id="site-name">西班牙语 200 课</h1>
       <p id="site-intro">每天 10 个重点词。从日常交流逐步提升到叙述、影视、播客与新闻理解。</p>
       <div class="language-picker"><button id="language-toggle" class="language-toggle" type="button" aria-haspopup="true" aria-expanded="false">Language ▾</button><div id="language-menu" class="language-menu" hidden><button class="language-option" data-lang="zh" type="button">中文</button><button class="language-option" data-lang="en" type="button">English</button></div></div>
       <button id="account-toggle" class="account-toggle" type="button">登录 / 注册</button>
@@ -172,7 +172,7 @@
       <section class="panel course-progress">
         <h3 id="course-progress-heading">学习进度</h3>
         <p id="course-progress-text" class="note">登录或注册后，可在不同设备继续学习。</p>
-        <progress id="course-progress" max="150" value="0"></progress>
+        <progress id="course-progress" max="200" value="0"></progress>
         <div class="controls"><button id="complete-lesson" class="secondary" type="button">登录后记录本课</button></div>
       </section>
       <section id="admin-panel" class="panel admin-panel" hidden>
@@ -529,8 +529,78 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       return { pack: Number(pack), title, titleEn, goal };
     });
 
-    const expansionLessons = expansionRows.map((spec, index) => {
-      const pack = expansionPacks[spec.pack]; const offset = (index % 5) * 3;
+    const extraExpansionPacks = [
+      'despertarse|醒来|to wake up;la alarma|闹钟|alarm;la mañana|早晨|morning;levantarse|起床|to get up;ducharse|洗澡|to shower;vestirse|穿衣服|to get dressed;desayunar|吃早餐|to have breakfast;salir de casa|出门|to leave home;llegar|到达|to arrive;temprano|早地|early;tarde|晚地|late;el día|白天|day;la noche|夜晚|night;acostarse|上床睡觉|to go to bed;dormir|睡觉|to sleep',
+      'la madre|母亲|mother;el padre|父亲|father;el hijo / la hija|儿子 / 女儿|son / daughter;el hermano / la hermana|兄弟 / 姐妹|brother / sister;los abuelos|祖父母|grandparents;el tío / la tía|叔伯舅姨 / 姑姨|uncle / aunt;el primo / la prima|堂表兄弟姐妹|cousin;casado / casada|已婚的|married;soltero / soltera|单身的|single;la familia|家庭|family;parecerse a|像……|to resemble;llevarse bien|相处融洽|to get along;visitar|拜访|to visit;cuidar|照顾|to take care of;juntos|一起|together',
+      'el supermercado|超市|supermarket;la lista|清单|list;la fruta|水果|fruit;la verdura|蔬菜|vegetables;el pan|面包|bread;la carne|肉|meat;el pescado|鱼|fish;la leche|牛奶|milk;el queso|奶酪|cheese;la botella|瓶子|bottle;el kilo|公斤|kilo;barato / barata|便宜的|cheap;caro / cara|贵的|expensive;necesitar|需要|to need;comprar|购买|to buy',
+      'el menú|菜单|menu;el camarero / la camarera|服务员|waiter / waitress;la mesa|桌子|table;la cuenta|账单|bill;pedir|点餐 / 要|to order;recomendar|推荐|to recommend;probar|尝试|to try;tener hambre|饿|to be hungry;tener sed|渴|to be thirsty;delicioso / deliciosa|好吃的|delicious;sin|没有|without;con|有 / 和|with;para llevar|外带|to take away;la propina|小费|tip;pagar|付款|to pay',
+      'la camisa|衬衫|shirt;el pantalón|裤子|trousers;los zapatos|鞋|shoes;el vestido|连衣裙|dress;la talla|尺码|size;el color|颜色|colour;rojo / roja|红色的|red;azul|蓝色的|blue;pequeño / pequeña|小的|small;grande|大的|big;ponerse|穿上|to put on;probarse|试穿|to try on;costar|花费|to cost;buscar|寻找|to look for;quedar bien|合身 / 好看|to suit',
+      'el barrio|街区|neighbourhood;la calle|街道|street;la esquina|街角|corner;la plaza|广场|square;el semáforo|红绿灯|traffic light;cerca|近|near;lejos|远|far;recto|直走|straight;girar|转弯|to turn;cruzar|穿过|to cross;seguir|继续 / 沿着走|to follow;la dirección|方向 / 地址|direction / address;el mapa|地图|map;perderse|迷路|to get lost;encontrar|找到|to find',
+      'el autobús|公交车|bus;el metro|地铁|metro;la parada|车站|stop;la estación|站|station;el billete|票|ticket;subir|上车|to get on;bajar|下车|to get off;esperar|等候|to wait;llegar a|到达|to arrive at;salir|离开 / 出发|to leave;el horario|时刻表|timetable;la línea|线路|line;el asiento|座位|seat;el tráfico|交通|traffic;retrasado / retrasada|晚点的|delayed',
+      'el gimnasio|健身房|gym;el parque|公园|park;pasear|散步|to stroll;correr|跑步|to run;nadar|游泳|to swim;bailar|跳舞|to dance;leer|阅读|to read;dibujar|画画|to draw;jugar|玩|to play;la película|电影|film;la serie|电视剧|series;el concierto|音乐会|concert;quedar|约见|to meet up;divertido / divertida|有趣的|fun;preferir|更喜欢|to prefer',
+      'la clase|课|class;el profesor / la profesora|老师|teacher;el compañero / la compañera|同学 / 同事|classmate / colleague;la tarea|作业|homework;la pregunta|问题|question;la respuesta|回答|answer;aprender|学习|to learn;estudiar|学习|to study;practicar|练习|to practise;entender|理解|to understand;repetir|重复|to repeat;escribir|写|to write;leer|读|to read;trabajar|工作|to work;descansar|休息|to rest',
+      'me duele|我……疼|it hurts;la cabeza|头|head;el estómago|胃|stomach;la garganta|喉咙|throat;la fiebre|发烧|fever;el médico / la médica|医生|doctor;la farmacia|药店|pharmacy;la medicina|药|medicine;descansar|休息|to rest;beber agua|喝水|to drink water;mejorar|好转|to get better;cansado / cansada|疲惫的|tired;preocupado / preocupada|担心的|worried;sano / sana|健康的|healthy;necesitar|需要|to need'
+    ].map(pack => pack.split(';').map(item => { const [word, zh, en] = item.split('|'); return { word, zh, en }; }));
+
+    const extraExpansionRows = `
+20::早晨与日常作息::Morning and Daily Routine::说出起床、洗漱、出门和睡觉等日常安排。
+20::时间、日期与约定::Time, Dates and Arrangements::询问时间并安排一天中的活动。
+20::我的家与房间::My Home and Rooms::介绍房间、家中物品与位置。
+20::家务分工::Sharing Housework::说出家务、频率与简单分工。
+20::平日与周末习惯::Weekday and Weekend Habits::比较平日和周末的日常习惯。
+21::介绍我的家庭::Introducing My Family::用基本亲属词介绍家庭成员。
+21::描述家人::Describing Family Members::描述外貌、性格和家庭关系。
+21::探望亲友::Visiting Family and Friends::安排拜访、问候和感谢。
+21::家庭计划::Family Plans::谈论家庭周末计划和将来的安排。
+21::互相帮助::Helping at Home::表达责任、帮助和简单建议。
+22::超市购物清单::A Supermarket List::购买食材并询问数量。
+22::水果、蔬菜与价格::Fruit, Vegetables and Prices::比较价格，说明需要买什么。
+22::在餐厅点菜::Ordering at a Restaurant::看菜单、点菜并提出简单要求。
+22::喜欢与不喜欢的食物::Food Likes and Dislikes::用 gustar 表达食物偏好。
+22::咖啡馆与外带::At a Café and Takeaway::点饮料、付款并选择外带。
+23::衣服与颜色::Clothes and Colours::说出常见衣物、颜色和搭配。
+23::试穿与尺码::Trying On and Sizes::询问尺码、试穿并给出反馈。
+23::价格与比较::Prices and Comparisons::比较物品的贵、便宜、大和小。
+23::换货与退款::Returns and Exchanges::礼貌说明问题并请求换货。
+23::购物建议::Shopping Recommendations::说明需要什么，接受或拒绝建议。
+24::我的街区::My Neighbourhood::介绍街区里的地点和服务。
+24::问路与指路::Asking for and Giving Directions::询问地点并给出简单路线。
+24::邮局与寄信::At the Post Office::寄信、确认地址和服务要求。
+24::家里需要维修::A Repair at Home::描述小故障并预约维修。
+24::租房基础对话::Basic Renting Dialogue::询问房间、租金和基本条件。
+25::乘公交和地铁::Bus and Metro Travel::询问线路、车站和下车地点。
+25::车票、时间和站台::Tickets, Times and Platforms::买票、确认时间和站台。
+25::出租车与目的地::Taxis and Destinations::说明目的地、位置和路线。
+25::城市散步::Walking Around the City::谈论步行路线和附近地标。
+25::迟到与交通问题::Late and Transport Problems::解释迟到原因并提出新安排。
+26::兴趣爱好::Hobbies and Interests::说出喜欢做的休闲活动。
+26::看电影和电视剧::Films and TV Series::谈论电影、电视剧和简单评价。
+26::邀约与回应::Invitations and Replies::邀请朋友并接受、拒绝或改约。
+26::周末计划::Weekend Plans::用 ir a 表达近期计划。
+26::电话与消息::Calls and Messages::留下简短信息并约定回复。
+27::教室里的西班牙语::Spanish in the Classroom::理解课堂指令并提出问题。
+27::简单工作任务::Simple Work Tasks::说明基本任务、地点和时间。
+27::邮件与约会::Emails and Appointments::写一封简短确认邮件并安排会面。
+27::日程与优先事项::Schedules and Priorities::谈论今天先做什么、后做什么。
+27::团队里的请求::Requests in a Team::礼貌请求帮助并确认下一步。
+28::身体不舒服::Feeling Unwell::描述常见疼痛和不舒服。
+28::在药店::At the Pharmacy::询问药物并理解简单建议。
+28::睡眠、运动与健康::Sleep, Exercise and Health::谈论健康习惯和频率。
+28::情绪与状态::Feelings and States::用 estar 表达当下感受和状态。
+28::预约看医生::Making a Doctor's Appointment::说明症状并预约就诊时间。
+29::酒店入住::Checking In at a Hotel::确认预订、房间和钥匙。
+29::旅行中的吃饭::Eating While Travelling::在陌生城市点餐并说明需要。
+29::请求帮助::Asking for Help::在旅行或日常生活中礼貌求助。
+29::生活场景复述::Retelling a Daily-Life Situation::用现在时和过去时复述简单经历。
+29::200 课生活交流综合练习::200-Lesson Everyday Communication Practice::综合运用居家、餐饮、出行、健康和社交表达。
+`.trim().split('\n').map(row => {
+      const [pack, title, titleEn, goal] = row.split('::');
+      return { pack: Number(pack), title, titleEn, goal };
+    });
+
+    const allExpansionPacks = [...expansionPacks, ...extraExpansionPacks];
+    const expansionLessons = [...expansionRows, ...extraExpansionRows].map((spec, index) => {
+      const pack = allExpansionPacks[spec.pack]; const offset = (index % 5) * 3;
       const words = Array.from({ length: 10 }, (_, wordIndex) => ({ ...pack[(offset + wordIndex) % pack.length] }));
       return { id: baseLessons.length + index + 1, title: spec.title, titleEn: spec.titleEn, goal: spec.goal, words: words.map(word => ({ ...word, pos: inferPos(word.word), note: inferNote(word.word), forms: inferForms(word.word) })) };
     });
@@ -574,6 +644,18 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
     }
     function grammarFor(lesson) {
       if (lesson.id > 50) {
+        if (lesson.id > 150) {
+          if (isEnglish()) return [
+            'Build useful everyday sentences with a clear pattern: subject + present-tense verb + information. For example: <strong>Yo compro pan por la mañana.</strong>',
+            'Use the core structures by situation: <strong>hay</strong> for what exists, <strong>estar</strong> for location or a temporary state, <strong>gustar</strong> for likes, and <strong>ir a + infinitive</strong> for a near-future plan.',
+            'For polite requests, use complete chunks: <strong>Quiero...</strong>, <strong>¿Puede ayudarme?</strong> and <strong>¿Dónde está...?</strong>. They work in shops, restaurants, travel and daily life.'
+          ];
+          return [
+            '用最实用的句子骨架表达：主语 + 现在时动词 + 信息。例如：<strong>Yo compro pan por la mañana.</strong>（我早上买面包。）',
+            '按场景掌握核心结构：<strong>hay</strong> 表示“有”，<strong>estar</strong> 表示位置或临时状态，<strong>gustar</strong> 表达喜好，<strong>ir a + 动词原形</strong> 表达近期计划。',
+            '礼貌请求优先整句记忆：<strong>Quiero...</strong>、<strong>¿Puede ayudarme?</strong>、<strong>¿Dónde está...?</strong>，在商店、餐厅、旅行和日常生活中都很常用。'
+          ];
+        }
         if (isEnglish()) {
           if (lesson.id <= 75) return ['Move from isolated sentences to short connected stories. Use time markers such as <strong>antes</strong>, <strong>mientras</strong> and <strong>de repente</strong>.', 'When a situation is practical, learn a complete request first: explain the problem, ask for help, then confirm the solution.'];
           if (lesson.id <= 100) return ['Give a reason before your opinion: <strong>porque</strong>, <strong>por eso</strong> and <strong>sin embargo</strong> make your meaning clearer.', 'For past experiences, alternate background information with completed events instead of translating word by word.'];
@@ -619,7 +701,7 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       return forms[word.word] || [];
     }
     const labels = {
-      zh: { siteName:'西班牙语 150 课', siteIntro:'每天 10 个重点词。从日常交流逐步提升到叙述、影视、播客与新闻理解。', switch:'English', lesson:'第', lessonSuffix:'课', daily:'每日 10 词', goal:'学习本主题的 10 个高频词，并在例句和对话中练习。', previous:'← 上一课', next:'下一课 →', termHeading:'单词跟读', termThree:'每词读 3 遍', termOne:'每词读 1 遍', stop:'停止', wordHeading:'10 个单词卡', wordNote:'点“播放”可单独听词。名词会保留冠词；动词卡会显示本课常用形式。', exampleHeading:'5 个例句', dialogueHeading:'微型对话', grammarHeading:'今日语法', play:'播放', playSentence:'播放这句', pos:'词性：', note:'提示：', forms:'常用形式：', speed:'速度：' },
+      zh: { siteName:'西班牙语 200 课', siteIntro:'每天 10 个重点词。从日常交流逐步提升到叙述、影视、播客与新闻理解。', switch:'English', lesson:'第', lessonSuffix:'课', daily:'每日 10 词', goal:'学习本主题的 10 个高频词，并在例句和对话中练习。', previous:'← 上一课', next:'下一课 →', termHeading:'单词跟读', termThree:'每词读 3 遍', termOne:'每词读 1 遍', stop:'停止', wordHeading:'10 个单词卡', wordNote:'点“播放”可单独听词。名词会保留冠词；动词卡会显示本课常用形式。', exampleHeading:'5 个例句', dialogueHeading:'微型对话', grammarHeading:'今日语法', play:'播放', playSentence:'播放这句', pos:'词性：', note:'提示：', forms:'常用形式：', speed:'速度：' },
       en: { siteName:'Spanish learning', siteIntro:'Ten key words a day. The course moves gradually from everyday conversation to narrative, TV, film, podcasts and news comprehension.', switch:'中文', lesson:'Lesson', lessonSuffix:'', daily:'10 words a day', goal:'Learn 10 high-frequency words for this theme and practise them in examples and dialogue.', previous:'← Previous lesson', next:'Next lesson →', termHeading:'Word practice', termThree:'Read each word 3 times', termOne:'Read each word once', stop:'Stop', wordHeading:'10 word cards', wordNote:'Use Play to hear one word. Nouns keep their articles; verb cards show common forms when available.', exampleHeading:'5 example sentences', dialogueHeading:'Mini dialogue', grammarHeading:'Grammar for today', play:'Play', playSentence:'Play this line', pos:'Part of speech: ', note:'Note: ', forms:'Common forms: ', speed:'Speed: ' }
     };
     let spanishVoices = [];

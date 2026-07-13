@@ -616,7 +616,7 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
           ? localized('每日计划暂存在此浏览器；登录后可同步到不同设备。', 'This daily plan is stored in this browser until you sign in to sync it across devices.')
           : localized('登录或注册后，可在不同设备继续学习。', 'Sign in or register to continue on any device.'));
       $('#complete-lesson').textContent = !signedIn
-        ? localized(dailyMode ? '登录后同步今日完成' : '登录后记录本课', dailyMode ? 'Sign in to sync today\'s completion' : 'Sign in to record this lesson')
+        ? localized(dailyMode ? '完成今日学习（登录后同步）' : '登录后记录本课', dailyMode ? 'Finish today\'s learning (sign in to sync)' : 'Sign in to record this lesson')
         : finished ? localized(dailyMode ? '取消今日完成标记' : '取消完成标记', dailyMode ? 'Remove today\'s completion mark' : 'Remove completion mark')
           : localized(dailyMode ? '完成今日学习' : '完成本课', dailyMode ? 'Finish today\'s learning' : 'Mark this lesson complete');
       $('#complete-lesson').className = signedIn && !finished ? 'primary' : 'secondary';

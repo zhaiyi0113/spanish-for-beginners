@@ -105,6 +105,34 @@
     .line .speaker { display: inline-block; width: 28px; color: #1557c0; font-weight: 800; }
     .line button, .example button { margin-left: 10px; vertical-align: middle; }
     .progress { width: 100%; accent-color: #1557c0; }
+    .dialogue-video-panel { overflow: hidden; padding: 0; border-color: #c8d9f2; background: #fff; }
+    .dialogue-video-heading { padding: 20px 22px 0; }
+    .dialogue-video-heading h3 { margin-bottom: 5px; }
+    .dialogue-video-heading p { margin: 0; color: #5a6a7e; font-size: 14px; }
+    .video-stage { position: relative; min-height: 320px; overflow: hidden; padding: 22px; background: linear-gradient(135deg, #12315f 0%, #1557c0 52%, #5b91dc 100%); color: #fff; isolation: isolate; }
+    .video-stage::before, .video-stage::after { position: absolute; z-index: -1; width: 260px; height: 260px; border-radius: 50%; content: ''; background: rgba(255,255,255,.09); }
+    .video-stage::before { top: -120px; right: -65px; }
+    .video-stage::after { bottom: -155px; left: -90px; }
+    .video-scene { display: flex; align-items: center; gap: 8px; color: #dbeaff; font-size: 14px; font-weight: 750; letter-spacing: .04em; }
+    .video-scene .scene-icon { display: grid; width: 31px; height: 31px; place-items: center; border-radius: 50%; background: rgba(255,255,255,.16); font-size: 18px; }
+    .video-characters { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(24px, 10vw, 110px); align-items: end; min-height: 178px; padding: 14px clamp(2px, 4vw, 42px) 0; }
+    .video-character { display: grid; justify-items: center; gap: 9px; opacity: .64; transform: translateY(8px) scale(.97); transition: opacity .25s ease, transform .25s ease; }
+    .video-character.speaking { opacity: 1; transform: translateY(-5px) scale(1.04); }
+    .video-avatar { display: grid; width: 94px; height: 94px; place-items: center; border: 4px solid rgba(255,255,255,.56); border-radius: 50%; box-shadow: 0 12px 26px rgba(8, 27, 64, .3); font-size: 46px; }
+    .video-character[data-speaker="A"] .video-avatar { background: linear-gradient(145deg, #ff9eb1, #d94872); }
+    .video-character[data-speaker="B"] .video-avatar { background: linear-gradient(145deg, #55c9e2, #2b6cb0); }
+    .video-character-name { font-weight: 850; }
+    .video-character-bubble { max-width: 230px; min-height: 42px; padding: 9px 12px; border-radius: 13px; background: rgba(255,255,255,.14); color: #eff7ff; font-size: 13px; line-height: 1.35; text-align: center; }
+    .video-character.speaking .video-character-bubble { background: rgba(255,255,255,.28); box-shadow: 0 6px 18px rgba(8, 27, 64, .18); }
+    .video-captions { width: min(760px, 100%); margin: 0 auto; padding: 14px 17px; border: 1px solid rgba(255,255,255,.34); border-radius: 14px; background: rgba(8, 27, 64, .28); backdrop-filter: blur(7px); text-align: center; }
+    .video-caption-es { font-size: clamp(17px, 2.2vw, 23px); font-weight: 800; line-height: 1.4; }
+    .video-caption-translation { margin-top: 5px; color: #dbeaff; font-size: 14px; }
+    .video-controls { padding: 16px 22px 20px; background: #f7faff; }
+    .video-controls-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .video-controls .controls { margin-top: 0; }
+    .video-progress { width: 100%; margin: 14px 0 7px; accent-color: #1557c0; }
+    .video-position { color: #526174; font-size: 14px; }
+    .video-preview-badge { display: inline-block; margin-left: 8px; padding: 3px 7px; border-radius: 999px; background: #e3efff; color: #1557c0; font-size: 12px; vertical-align: middle; }
     .grammar { margin: 0; padding-left: 22px; line-height: 1.8; }
     .note { color: #5a6a7e; font-size: 14px; }
     .footer-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 34px; }
@@ -120,6 +148,11 @@
       main { padding: 28px 16px 46px; }
       .word-grid { grid-template-columns: 1fr; }
       .daily-summary-grid { grid-template-columns: 1fr; }
+      .video-stage { min-height: 300px; padding: 16px; }
+      .video-characters { gap: 12px; padding-inline: 0; }
+      .video-avatar { width: 74px; height: 74px; font-size: 36px; }
+      .video-character-bubble { max-width: 144px; font-size: 12px; }
+      .video-controls, .dialogue-video-heading { padding-inline: 16px; }
     }
   </style>
 </head>
@@ -229,6 +262,23 @@
         <div class="speed-controls" data-target="dialogue"><span>速度：</span><button class="secondary small speed" data-rate="0.5" type="button">0.5×</button><button class="secondary small speed" data-rate="0.8" type="button">0.8×</button><button class="secondary small speed active" data-rate="1" type="button">1×</button></div>
       </section>
       <div id="dialogue" class="dialogue"></div>
+
+      <section class="panel dialogue-video-panel" aria-label="对话动画视频">
+        <div class="dialogue-video-heading"><h3 id="dialogue-video-heading">对话动画视频 <span class="video-preview-badge">预览</span></h3><p id="dialogue-video-note">A/B 配音、同步字幕与场景动画；内容会随当前课程对话变化。</p></div>
+        <div class="video-stage">
+          <div id="video-scene" class="video-scene"><span class="scene-icon">🎬</span><span></span></div>
+          <div class="video-characters">
+            <div class="video-character speaking" data-speaker="A"><div class="video-avatar">👩</div><div class="video-character-name">A</div><div id="video-bubble-a" class="video-character-bubble"></div></div>
+            <div class="video-character" data-speaker="B"><div class="video-avatar">👨</div><div class="video-character-name">B</div><div id="video-bubble-b" class="video-character-bubble"></div></div>
+          </div>
+          <div class="video-captions"><div id="video-caption-es" class="video-caption-es"></div><div id="video-caption-translation" class="video-caption-translation"></div></div>
+        </div>
+        <div class="video-controls">
+          <div class="video-controls-top"><div class="controls"><button id="video-play" class="primary" type="button">播放动画视频</button><button id="video-pause" class="secondary" type="button">暂停</button><button id="video-stop" class="secondary" type="button">停止</button></div><span id="video-status" class="video-position"></span></div>
+          <input id="video-progress" class="video-progress" type="range" min="0" max="4" value="0" step="1" aria-label="对话动画播放进度">
+          <div id="video-position" class="video-position"></div>
+        </div>
+      </section>
 
       <section class="panel">
         <h3 id="grammar-heading">今日语法</h3>
@@ -681,7 +731,7 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
 
     const REVIEW_INTERVALS = [1, 2, 4, 7, 14, 30];
     const DAILY_LESSON_LIMIT = 3;
-    const state = { lessonId: 1, lang: 'zh', mode: 'course', rate: { examples: 1, dialogue: 1 }, dialogueStart: 0, run: 0, user: null, progressLoaded: false, completedLessons: [], dailyStudy: defaultDailyStudy(), dailyLessonId: null, dailyQuizKey: null, authMode: 'register', adminUsers: [], adminFilter: '', adminLoading: false, adminError: '' };
+    const state = { lessonId: 1, lang: 'zh', mode: 'course', rate: { examples: 1, dialogue: 1 }, dialogueStart: 0, video: { start: 0, playing: false, paused: false }, run: 0, user: null, progressLoaded: false, completedLessons: [], dailyStudy: defaultDailyStudy(), dailyLessonId: null, dailyQuizKey: null, authMode: 'register', adminUsers: [], adminFilter: '', adminLoading: false, adminError: '' };
     const isEnglish = () => state.lang === 'en';
     const meaningFor = word => isEnglish() ? word.en : word.zh;
     const translationFor = item => isEnglish() ? item.en : item.zh;
@@ -709,7 +759,11 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
     function loadVoices() { spanishVoices = speechSynthesis.getVoices().filter(v => v.lang.toLowerCase().startsWith('es')); }
     loadVoices(); speechSynthesis.addEventListener('voiceschanged', loadVoices);
     const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
-    function stopAll() { state.run += 1; speechSynthesis.cancel(); }
+    function stopAll(keepVideo = false) {
+      state.run += 1;
+      speechSynthesis.cancel();
+      if (!keepVideo && state.video) { state.video.playing = false; state.video.paused = false; }
+    }
     function voiceFor(role) {
       const preferred = role === 'B' ? ['Pablo', 'Raul'] : ['Laura', 'Helena', 'Sabina'];
       return preferred.map(name => spanishVoices.find(v => v.name.includes(name))).find(Boolean) || spanishVoices[0];
@@ -726,7 +780,7 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       });
     }
     async function speakSequence(items, options, onEach, gap = 1000) {
-      stopAll(); const myRun = state.run;
+      stopAll(options.keepVideo); const myRun = state.run;
       for (let i = 0; i < items.length; i++) {
         if (myRun !== state.run) return false;
         onEach?.(items[i], i);
@@ -742,6 +796,93 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
     const $ = selector => document.querySelector(selector);
     function currentLesson() { return lessons[state.lessonId - 1]; }
     const localized = (zh, en) => isEnglish() ? en : zh;
+
+    function videoSceneFor(lesson) {
+      const scenes = [
+        ['👋', '日常会面', 'Everyday conversation'], ['🏠', '居家生活', 'Home life'], ['☕', '餐饮时光', 'Food and café'], ['🗺️', '城市出行', 'Getting around'], ['🛍️', '购物场景', 'Shopping'], ['👨‍👩‍👧', '朋友与家庭', 'Friends and family'], ['💼', '学习与工作', 'Study and work'], ['🌿', '健康与休闲', 'Health and leisure']
+      ];
+      return scenes[(lesson.id - 1) % scenes.length];
+    }
+    function setDialogueVideoLabels() {
+      $('#dialogue-video-heading').innerHTML = `${localized('对话动画视频', 'Dialogue animation video')} <span class="video-preview-badge">${localized('预览', 'Preview')}</span>`;
+      $('#dialogue-video-note').textContent = localized('A/B 配音、同步字幕与场景动画；内容会随当前课程对话变化。', 'A/B voices, synchronised captions and a simple scene; the content changes with the current lesson dialogue.');
+      $('#video-play').textContent = state.video.paused ? localized('继续播放', 'Resume') : localized('播放动画视频', 'Play animation');
+      $('#video-pause').textContent = state.video.paused ? localized('继续', 'Resume') : localized('暂停', 'Pause');
+      $('#video-stop').textContent = localized('停止', 'Stop');
+    }
+    function updateDialogueVideoFrame(dialogue, index = 0, speaking = false) {
+      if (!dialogue.length) return;
+      const safeIndex = Math.max(0, Math.min(dialogue.length - 1, index));
+      const line = dialogue[safeIndex];
+      const lesson = currentLesson();
+      const [icon, zhScene, enScene] = videoSceneFor(lesson);
+      $('#video-scene').querySelector('.scene-icon').textContent = icon;
+      $('#video-scene').lastElementChild.textContent = localized(`${zhScene} · 第 ${lesson.id} 课`, `${enScene} · Lesson ${lesson.id}`);
+      $('#video-caption-es').textContent = `${line[0]} · ${line[1]}`;
+      $('#video-caption-translation').textContent = localized(line[2], line[3]);
+      $('#video-bubble-a').textContent = line[0] === 'A' ? line[1] : '…';
+      $('#video-bubble-b').textContent = line[0] === 'B' ? line[1] : '…';
+      document.querySelectorAll('.video-character').forEach(character => character.classList.toggle('speaking', speaking && character.dataset.speaker === line[0]));
+      $('#video-progress').max = String(dialogue.length - 1);
+      $('#video-progress').value = String(safeIndex);
+      $('#video-position').textContent = localized(`第 ${safeIndex + 1} / ${dialogue.length} 句 · 可拖动进度`, `Line ${safeIndex + 1} / ${dialogue.length} · Drag to seek`);
+    }
+    function renderDialogueVideo(dialogue) {
+      state.video = { start: 0, playing: false, paused: false };
+      setDialogueVideoLabels();
+      updateDialogueVideoFrame(dialogue, 0, false);
+      $('#video-status').textContent = localized('准备播放', 'Ready to play');
+    }
+    async function playDialogueVideo() {
+      const dialogue = makeDialogue(currentLesson());
+      if (!dialogue.length) return;
+      if (state.video.playing && !state.video.paused) return;
+      if (state.video.paused) {
+        speechSynthesis.resume();
+        state.video.paused = false; state.video.playing = true;
+        setDialogueVideoLabels();
+        $('#video-status').textContent = localized('继续播放中', 'Playing');
+        return;
+      }
+      const start = state.video.start >= dialogue.length ? 0 : state.video.start;
+      state.video.start = start; state.video.playing = true; state.video.paused = false;
+      setDialogueVideoLabels();
+      $('#video-status').textContent = localized('播放中', 'Playing');
+      const completed = await speakSequence(dialogue.slice(start).map(line => ({ text: line[1], role: line[0] })), { rate: state.rate.dialogue, keepVideo: true }, (item, offset) => {
+        const position = start + offset;
+        state.video.start = position;
+        updateDialogueVideoFrame(dialogue, position, true);
+      }, 650);
+      if (completed) {
+        state.video = { start: 0, playing: false, paused: false };
+        updateDialogueVideoFrame(dialogue, dialogue.length - 1, false);
+        setDialogueVideoLabels();
+        $('#video-status').textContent = localized('动画播放完成', 'Animation complete');
+      } else if (!state.video.paused) {
+        state.video.playing = false;
+        setDialogueVideoLabels();
+        $('#video-status').textContent = localized('已停止', 'Stopped');
+      }
+    }
+    function toggleDialogueVideoPause() {
+      if (!state.video.playing && !state.video.paused) return;
+      if (state.video.paused) {
+        speechSynthesis.resume(); state.video.paused = false; state.video.playing = true;
+        $('#video-status').textContent = localized('继续播放中', 'Playing');
+      } else {
+        speechSynthesis.pause(); state.video.paused = true;
+        $('#video-status').textContent = localized('已暂停', 'Paused');
+      }
+      setDialogueVideoLabels();
+    }
+    function stopDialogueVideo(cancel = true) {
+      if (cancel) stopAll();
+      const dialogue = makeDialogue(currentLesson());
+      state.video = { start: 0, playing: false, paused: false };
+      updateDialogueVideoFrame(dialogue, 0, false);
+      setDialogueVideoLabels();
+      $('#video-status').textContent = localized('已停止', 'Stopped');
+    }
 
     function defaultDailyStudy() { return { startDate: '', completedDays: [], lessonDates: {}, reviewRecords: {} }; }
     function sanitizeDailyStudy(raw) {
@@ -1123,6 +1264,7 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
       $('#word-grid').innerHTML = lesson.words.map((w, index) => { const forms = formsFor(w); return `<article class="word-card"><div class="word-top"><div><div class="word">${w.word}</div><div class="translation">${meaningFor(w)}</div></div><button class="secondary small word-play" data-index="${index}" type="button">${labels[state.lang].play}</button></div><div class="meta"><strong>${labels[state.lang].pos}</strong>${posFor(w)}</div><div class="meta"><strong>${labels[state.lang].note}</strong>${noteFor(w)}</div>${forms.length ? `<div class="forms"><strong>${labels[state.lang].forms}</strong>${forms.map(f => `<button class="secondary small form-play" data-form="${f.split(/[＝=]/)[0]}" type="button">${f}</button>`).join(' ')}</div>` : ''}</article>`; }).join('');
       $('#examples').innerHTML = examples.map((e, index) => `<article class="example"><span class="spanish">${e.es}</span><button class="secondary small example-play" data-index="${index}" type="button">${labels[state.lang].playSentence}</button><div class="chinese">${translationFor(e)}</div></article>`).join('');
       $('#dialogue').innerHTML = dialogue.map((line, index) => `<article class="line"><span class="speaker">${line[0]}</span><span class="spanish">${line[1]}</span><button class="secondary small dialogue-play" data-index="${index}" type="button">${labels[state.lang].playSentence}</button><div class="chinese">${localized(line[2], line[3])}</div></article>`).join('');
+      renderDialogueVideo(dialogue);
       $('#grammar').innerHTML = grammarFor(lesson).map(g => `<li>${g}</li>`).join('');
       renderNav(); bindLessonContent();
       $('#previous').disabled = $('#previous-bottom').disabled = lesson.id === 1;
@@ -1188,8 +1330,19 @@ to understand;key word;context;to repeat;to pause;to note down;to look up;to gue
     $('#play-examples').addEventListener('click', async () => { const examples = pairExamples(currentLesson()); const completed = await speakSequence(examples.map(e => ({ text: e.es })), { rate: state.rate.examples }, (item, index) => { $('#example-current').textContent = item.text; $('#example-status').textContent = localized(`第 ${index + 1} / 5 句；本句朗读 1 遍。`, `Sentence ${index + 1} / 5; read once.`); }); if (completed) $('#example-status').textContent = localized('例句已朗读完毕。', 'Examples have finished.'); });
     $('#play-dialogue').addEventListener('click', async () => { const dialogue = makeDialogue(currentLesson()).slice(state.dialogueStart); const completed = await speakSequence(dialogue.map(l => ({ text: l[1], role: l[0] })), { rate: state.rate.dialogue }, (item, index) => { const position = state.dialogueStart + index; $('#dialogue-progress').value = position; $('#dialogue-current').textContent = `${item.role}：${item.text}`; $('#dialogue-status').textContent = localized(`第 ${position + 1} / 5 句；本句朗读 1 遍。`, `Line ${position + 1} / 5; read once.`); }); if (completed) { $('#dialogue-progress').value = 5; $('#dialogue-position').textContent = localized('对话完成', 'Dialogue complete'); $('#dialogue-status').textContent = localized('A 与 B 的整段对话已朗读完毕。', 'The full A/B dialogue has finished.'); } });
     $('#dialogue-progress').addEventListener('input', event => { stopAll(); const value = Number(event.target.value); state.dialogueStart = value === 5 ? 0 : value; $('#dialogue-position').textContent = value === 5 ? localized('已到结尾；再次播放会从第一句开始', 'At the end; play starts again from line one') : localized(`从第 ${value + 1} / 5 句开始播放`, `Start from line ${value + 1} / 5`); });
+    $('#video-play').addEventListener('click', () => { void playDialogueVideo(); });
+    $('#video-pause').addEventListener('click', toggleDialogueVideoPause);
+    $('#video-stop').addEventListener('click', () => stopDialogueVideo());
+    $('#video-progress').addEventListener('input', event => {
+      stopAll();
+      const dialogue = makeDialogue(currentLesson());
+      state.video = { start: Number(event.target.value), playing: false, paused: false };
+      updateDialogueVideoFrame(dialogue, state.video.start, false);
+      setDialogueVideoLabels();
+      $('#video-status').textContent = localized('已跳转到所选句子', 'Moved to the selected line');
+    });
     document.querySelectorAll('.speed-controls').forEach(group => group.addEventListener('click', event => { const button = event.target.closest('.speed'); if (!button) return; const target = group.dataset.target; state.rate[target] = Number(button.dataset.rate); group.querySelectorAll('.speed').forEach(b => b.classList.toggle('active', b === button)); }));
-    document.querySelectorAll('.stop-all').forEach(button => button.addEventListener('click', () => { stopAll(); $('#term-status').textContent = localized('已停止。', 'Stopped.'); $('#example-status').textContent = localized('已停止。', 'Stopped.'); $('#dialogue-status').textContent = localized('已停止。', 'Stopped.'); }));
+    document.querySelectorAll('.stop-all').forEach(button => button.addEventListener('click', () => { stopAll(); stopDialogueVideo(false); $('#term-status').textContent = localized('已停止。', 'Stopped.'); $('#example-status').textContent = localized('已停止。', 'Stopped.'); $('#dialogue-status').textContent = localized('已停止。', 'Stopped.'); }));
     function selectLesson(id) { state.lessonId = Math.min(lessons.length, Math.max(1, id)); history.replaceState(null, '', `#leccion-${state.lessonId}`); localStorage.setItem('spanish-course-lesson', state.lessonId); void saveProgress(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
     $('#lesson-nav').addEventListener('click', event => { const link = event.target.closest('[data-lesson]'); if (!link) return; event.preventDefault(); selectLesson(Number(link.dataset.lesson)); });
     ['previous', 'previous-bottom'].forEach(id => $(`#${id}`).addEventListener('click', () => selectLesson(state.lessonId - 1)));
